@@ -10,29 +10,35 @@ set(CMAKE_CXX_EXTENSIONS OFF)
 
 # ! ! ! ! ! ! !
 # Set this to ON instead of OFF to ship the game!
-# When ON → production mode (console will be hidden on Windows / no terminal needed on Linux)
-# When OFF → development mode (console will be visible)
+# This changes RESOURCES_PATH to the local folder next to the executable.
 # ! ! ! ! ! ! !
-# Delete the build folder after changing this value.
+# Delete the build folder after changing this (CMake sometimes caches it).
 set(PRODUCTION_BUILD OFF CACHE BOOL "Make this a production build" FORCE)
 
 if(MSVC)
+	# Corrected: proper static runtime for both Debug and Release
 	set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>" CACHE STRING "" FORCE)
-	add_compile_options(/arch:AVX2)
+	add_compile_options(/arch:AVX2)          # SIMD optimizations
 else()
-	add_compile_options(-mavx2 -mfma)        # SIMD on Linux (Cachy OS)
+	add_compile_options(-mavx2 -mfma)        # SIMD on Linux/macOS/etc. (Cachy OS uses this)
 endif()
 
+# Ensure raylib is built as a static library
 set(BUILD_SHARED_LIBS OFF CACHE BOOL "Build Raylib as static libraries" FORCE)
 
 project(TerrariaClone)
 
+# Tell CMake to build raylib, imgui, and rlImgui
 add_subdirectory(thirdparty/raylib-5.0)
+add_subdirectory(thirdparty/imgui-docking)
+add_subdirectory(thirdparty/rlImgui)
 
+# Collect all source files automatically
 file(GLOB_RECURSE MY_SOURCES CONFIGURE_DEPENDS "${CMAKE_CURRENT_SOURCE_DIR}/src/*.cpp")
 
 add_executable("${CMAKE_PROJECT_NAME}")
 
+# Set C++17 on the target
 set_property(TARGET "${CMAKE_PROJECT_NAME}" PROPERTY CXX_STANDARD 17)
 set_property(TARGET "${CMAKE_PROJECT_NAME}" PROPERTY CXX_STANDARD_REQUIRED ON)
 
@@ -52,25 +58,18 @@ target_sources("${CMAKE_PROJECT_NAME}" PRIVATE ${MY_SOURCES})
 
 if(MSVC)
 	target_compile_definitions("${CMAKE_PROJECT_NAME}" PUBLIC _CRT_SECURE_NO_WARNINGS)
-	if(PRODUCTION_BUILD)
-		# Windows only: completely hides the console window in production builds
-		set_target_properties("${CMAKE_PROJECT_NAME}" PROPERTIES
-				LINK_FLAGS "/SUBSYSTEM:WINDOWS /ENTRY:mainCRTStartup"
-		)
-	endif()
+	# Console is now ALWAYS shown (removed /SUBSYSTEM:WINDOWS as requested)
 elseif(MINGW)
+	# Console is now ALWAYS shown (removed -mwindows as requested)
+elseif(APPLE OR UNIX) # Cachy OS = Linux → this branch applies to you
+	# Console is ALWAYS shown on Linux (no equivalent hiding flag needed)
+	# Optional: strip symbols for smaller binary in production (harmless for console)
 	if(PRODUCTION_BUILD)
-		target_link_options("${CMAKE_PROJECT_NAME}" PRIVATE -mwindows)  # hides console on MinGW
-	endif()
-elseif(APPLE OR UNIX)   # ← This branch applies to you on Cachy OS (Linux)
-	# On Linux there is NO build flag that "hides" the console like Windows.
-	# Console visibility is controlled by HOW you launch the executable:
-	#   • Development (OFF) → run from terminal → console visible
-	#   • Production (ON)  → launch without terminal (double-click or .desktop) → console hidden
-	if(PRODUCTION_BUILD)
-		target_link_options("${CMAKE_PROJECT_NAME}" PRIVATE -s)  # just strip symbols
+		target_link_options("${CMAKE_PROJECT_NAME}" PRIVATE -s)
 	endif()
 endif()
 
 target_include_directories("${CMAKE_PROJECT_NAME}" PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/src/")
-target_link_libraries("${CMAKE_PROJECT_NAME}" PRIVATE raylib_static)
+
+# Link the static raylib target
+target_link_libraries("${CMAKE_PROJECT_NAME}" PRIVATE raylib_static imgui rlimgui)
