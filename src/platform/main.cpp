@@ -2,13 +2,25 @@
 #include <raylib.h>
 #include <imgui.h>
 #include <rlImGui.h>
+#include "gameMain.h"
 
 int main()
 {
+#if PRODUCTION_BUILD
+	SetTraceLogCallback(LOG_NONE);
+#endif
+
 	SetConfigFlags(FLAG_WINDOW_RESIZABLE);
 	InitWindow(800, 600, "Terraria Clone");
+	SetExitKey(KEY_NULL); // Disable esc key from closing window
+	SetTargetFPS(240);
 
 	rlImGuiSetup(true);
+
+	if (!initGame())
+	{
+		return 0;
+	}
 
 #pragma region ImGui Setup
 	ImGuiIO& io = ImGui::GetIO();
@@ -19,49 +31,32 @@ int main()
 	while (!WindowShouldClose())
 	{
 		BeginDrawing();
-		ClearBackground(RAYWHITE);
+		ClearBackground(BLACK);
 
-#pragma region imgui Docking
 		rlImGuiBegin();
 
+#pragma region imgui Docking
 		ImGui::PushStyleColor(ImGuiCol_WindowBg, {});
 		ImGui::PushStyleColor(ImGuiCol_DockingEmptyBg, {});
 		ImGui::DockSpaceOverViewport(ImGui::GetMainViewport());
 		ImGui::PopStyleColor(2);
 #pragma endregion imgui Docking
 
-		DrawRectangle(50, 50, 100, 100, {255, 0, 0, 127});
-		DrawRectangle(75, 75, 100, 100, {0, 255, 0, 127});
-
-		ImGui::Begin("test");
-
-		ImGui::Text("Hello from ImGui");
-
-		if (ImGui::Button("Test button"))
+		if (!updateGame())
 		{
-			std::cout << "Hello from ImGui!" << std::endl;
+			CloseWindow();
 		}
-
-		ImGui::End();
-
-		ImGui::Begin("Test 2");
-		ImGui::Text("Slider Test");
-		ImGui::Separator();
-
-		ImGui::NewLine();
-		static float a = 0;
-		ImGui::SliderFloat("Slider", &a, 0.0f, 1.0f);
-
-		ImGui::End();
 
 		rlImGuiEnd();
 
 		EndDrawing();
 	}
 
-	rlImGuiShutdown();
-
 	CloseWindow();
+
+	closeGame();
+
+	rlImGuiShutdown();
 
 	return 0;
 }
