@@ -2,10 +2,12 @@
 #include "raylib.h"
 #include <assetManager.h>
 #include <gameMap.h>
+#include <helpers.h>
 
 struct GameData
 {
     GameMap gameMap;
+    Camera2D camera;
 } gameData;
 
 AssetManager assetManager;
@@ -17,10 +19,14 @@ bool initGame()
     gameData.gameMap.create(30, 10);
 
     gameData.gameMap.getBlocUnsafe(0, 0).type = Block::dirt;
-    gameData.gameMap.getBlocUnsafe(1, 1).type = Block::dirt;
-    gameData.gameMap.getBlocUnsafe(2, 2).type = Block::dirt;
-    gameData.gameMap.getBlocUnsafe(3, 3).type = Block::dirt;
-    gameData.gameMap.getBlocUnsafe(4, 4).type = Block::dirt;
+    gameData.gameMap.getBlocUnsafe(1, 1).type = Block::grass;
+    gameData.gameMap.getBlocUnsafe(2, 2).type = Block::goldBlock;
+    gameData.gameMap.getBlocUnsafe(3, 3).type = Block::glass;
+    gameData.gameMap.getBlocUnsafe(4, 4).type = Block::platform;
+
+    gameData.camera.target = {0, 0}; // World space view
+    gameData.camera.rotation = 0.0f;
+    gameData.camera.zoom = 100.0f;
 
     return true;
 }
@@ -33,7 +39,33 @@ bool updateGame()
         deltaTime = 1 / 5.f;
     }
 
+    gameData.camera.offset = {GetScreenWidth() / 2.0f, GetScreenHeight() / 2.0f};
+
     ClearBackground({75, 75, 150, 255});
+
+#pragma region camera movement
+    if (IsKeyDown(KEY_A))
+    {
+        gameData.camera.target.x -= 7.f * deltaTime;
+    }
+
+    if (IsKeyDown(KEY_D))
+    {
+        gameData.camera.target.x += 7.f * deltaTime;
+    }
+
+    if (IsKeyDown(KEY_W))
+    {
+        gameData.camera.target.y -= 7.f * deltaTime;
+    }
+
+    if (IsKeyDown(KEY_S))
+    {
+        gameData.camera.target.y += 7.f * deltaTime;
+    }
+#pragma endregion
+
+    BeginMode2D(gameData.camera);
 
     for (int y = 0; y < gameData.gameMap.h; y++)
     {
@@ -43,18 +75,12 @@ bool updateGame()
 
             if (block.type != Block::air)
             {
-                float size = 32;
-                float posX = x * size;
-                float posY = y * size;
-
-                DrawTexturePro(assetManager.dirt, Rectangle{0.f, 0.f, static_cast<float>(assetManager.dirt.width), static_cast<float>(assetManager.dirt.height)}, // Sprite source
-                    {posX, posY, size, size}, // Dest
-                    {0, 0}, // Origin
-                    0.0f, // rotation
-                    WHITE); // tint
+                DrawTexturePro(assetManager.textures, getTextureAtlas(block.type, 0, 32, 32), {static_cast<float>(x), static_cast<float>(y), 1, 1}, {0, 0}, 0.0f, WHITE);
             }
         }
     }
+
+    EndMode2D();
 
     return true;
 }
