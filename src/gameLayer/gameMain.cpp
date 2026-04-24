@@ -1,15 +1,27 @@
 #include "gameMain.h"
 #include "raylib.h"
+#include <assetManager.h>
+#include <gameMap.h>
 
 struct GameData
 {
-    float positionX = 100;
-    float positionY = 100;
+    GameMap gameMap;
 } gameData;
 
+AssetManager assetManager;
 
 bool initGame()
 {
+    assetManager.loadAll();
+
+    gameData.gameMap.create(30, 10);
+
+    gameData.gameMap.getBlocUnsafe(0, 0).type = Block::dirt;
+    gameData.gameMap.getBlocUnsafe(1, 1).type = Block::dirt;
+    gameData.gameMap.getBlocUnsafe(2, 2).type = Block::dirt;
+    gameData.gameMap.getBlocUnsafe(3, 3).type = Block::dirt;
+    gameData.gameMap.getBlocUnsafe(4, 4).type = Block::dirt;
+
     return true;
 }
 
@@ -21,27 +33,28 @@ bool updateGame()
         deltaTime = 1 / 5.f;
     }
 
-    if (IsKeyDown(KEY_A))
-    {
-        gameData.positionX -= 200 * deltaTime;
-    }
+    ClearBackground({75, 75, 150, 255});
 
-    if (IsKeyDown(KEY_D))
+    for (int y = 0; y < gameData.gameMap.h; y++)
     {
-        gameData.positionX += 200 * deltaTime;
-    }
+        for (int x = 0; x < gameData.gameMap.w; x++)
+        {
+            Block &block = gameData.gameMap.getBlocUnsafe(x, y);
 
-    if (IsKeyDown(KEY_W))
-    {
-        gameData.positionY -= 200 * deltaTime;
-    }
+            if (block.type != Block::air)
+            {
+                float size = 32;
+                float posX = x * size;
+                float posY = y * size;
 
-    if (IsKeyDown(KEY_S))
-    {
-        gameData.positionY += 200 * deltaTime;
+                DrawTexturePro(assetManager.dirt, Rectangle{0.f, 0.f, static_cast<float>(assetManager.dirt.width), static_cast<float>(assetManager.dirt.height)}, // Sprite source
+                    {posX, posY, size, size}, // Dest
+                    {0, 0}, // Origin
+                    0.0f, // rotation
+                    WHITE); // tint
+            }
+        }
     }
-
-    DrawRectangle(gameData.positionX, gameData.positionY, 50, 50, {255, 0, 255, 255});
 
     return true;
 }
