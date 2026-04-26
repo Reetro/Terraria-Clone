@@ -25,7 +25,7 @@ Block &GameMap::getBlocUnsafe(int x, int y)
     return mapData[x + y * w];
 }
 
-Block *GameMap::getBlocSafe(int x, int y)
+Block *GameMap::getBlockSafe(int x, int y)
 {
     permaAssertCommentDevelopement(mapData.size() == w * h, "Map data not initialized");
 

@@ -33,5 +33,5 @@ struct GameMap
      * @param y Target y cord
      * @return a pointer to the target block
      */
-    Block *getBlocSafe(int x, int y);
+    Block *getBlockSafe(int x, int y);
 };
