@@ -1,10 +1,12 @@
 #include <raylib.h>
 #include "gameMain.h"
 #include <assetManager.h>
+#include <chrono>
 #include <cmath>
-#include <iostream>
-#include <ostream>
+#include <imgui.h>
 #include <renderer.h>
+#include <worldGenerator.h>
+#include <randomStuff.h>
 
 AssetManager assetManager;
 
@@ -15,15 +17,9 @@ bool initGame()
     gameData.blockToPlace.type = Block::woodLog;
     gameData.tileToPlace.type = Tile::dirtWall;
 
-    gameData.gameMap.create(700, 500);
+    long seed = std::chrono::high_resolution_clock::now().time_since_epoch().count();
 
-    for (int i = 0; i < 700; i++)
-    {
-        for (int j = 0; j < 500; j++)
-        {
-            gameData.gameMap.getBlocUnsafe(i, j).type = Block::stone;
-        }
-    }
+    generateWorld(gameData.gameMap, seed);
 
     gameData.camera.target = {0, 0}; // World space view
     gameData.camera.rotation = 0.0f;
@@ -45,24 +41,26 @@ bool updateGame()
     ClearBackground({75, 75, 150, 255});
 
 #pragma region camera movement
+    static float CAMERA_SPEED = 10;
+
     if (IsKeyDown(KEY_A))
     {
-        gameData.camera.target.x -= 7.f * deltaTime;
+        gameData.camera.target.x -= CAMERA_SPEED * deltaTime;
     }
 
     if (IsKeyDown(KEY_D))
     {
-        gameData.camera.target.x += 7.f * deltaTime;
+        gameData.camera.target.x += CAMERA_SPEED * deltaTime;
     }
 
     if (IsKeyDown(KEY_W))
     {
-        gameData.camera.target.y -= 7.f * deltaTime;
+        gameData.camera.target.y -= CAMERA_SPEED * deltaTime;
     }
 
     if (IsKeyDown(KEY_S))
     {
-        gameData.camera.target.y += 7.f * deltaTime;
+        gameData.camera.target.y += CAMERA_SPEED * deltaTime;
     }
 #pragma endregion
 
@@ -70,26 +68,26 @@ bool updateGame()
     if (IsKeyDown(KEY_ONE))
     {
         gameData.blockToPlace.type = -1;
-        gameData.tileToPlace.type = Tile::sapling;
-        gameData.isHoldingWall = true;
+        gameData.tileToPlace.type = Tile::stoneWall;
+        gameData.isHoldingTile = true;
     }
 
     if (IsKeyDown(KEY_TWO))
     {
         gameData.blockToPlace.type = Block::dirt;
-        gameData.isHoldingWall = false;
+        gameData.isHoldingTile = false;
     }
 
     if (IsKeyDown(KEY_THREE))
     {
         gameData.blockToPlace.type = Block::leaves;
-        gameData.isHoldingWall = false;
+        gameData.isHoldingTile = false;
     }
 
     if (IsKeyDown(KEY_FOUR))
     {
         gameData.blockToPlace.type = Block::copper;
-        gameData.isHoldingWall = false;
+        gameData.isHoldingTile = false;
     }
 
     Vector2 worldPos = GetScreenToWorld2D(GetMousePosition(), gameData.camera);
@@ -117,7 +115,7 @@ bool updateGame()
     // Place blocks
     if (IsMouseButtonPressed(MOUSE_BUTTON_RIGHT))
     {
-        if (gameData.isHoldingWall)
+        if (gameData.isHoldingTile)
         {
             if (Tile* t = gameData.gameMap.getTileSafe(blockX, blockY))
             {
@@ -139,6 +137,13 @@ bool updateGame()
     renderWorld(assetManager, gameData);
 
     EndMode2D();
+
+    ImGui::Begin("Game Control");
+
+    ImGui::SliderFloat("Camera Zoom:", &gameData.camera.zoom, 10.0f, 150);
+    ImGui::SliderFloat("Camera Speed:", &CAMERA_SPEED, 5, 30);
+
+    ImGui::End();
 
     DrawFPS(10, 10);
 

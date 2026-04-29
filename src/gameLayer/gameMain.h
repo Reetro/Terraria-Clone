@@ -9,7 +9,7 @@ inline struct GameData
     Camera2D camera{};
     Block blockToPlace;
     Tile tileToPlace;
-    bool isHoldingWall = false;
+    bool isHoldingTile = false;
 } gameData;
 
 // Initializes game login called when game starts

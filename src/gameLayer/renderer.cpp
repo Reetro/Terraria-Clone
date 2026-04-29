@@ -4,7 +4,7 @@
 #include <blocks.h>
 #include <gameMain.h>
 #include <iostream>
-#include <ostream>
+#include <randomStuff.h>
 
 int getTreeColumn(Block* up, Block* down, Block* left, Block* right)
 {
@@ -75,14 +75,10 @@ void renderWoodLog(const AssetManager& assetManager, GameData& data, const int x
 void renderTile(const AssetManager& assetManager, GameData& data, int x, int y)
 {
     auto &[tile] = data.gameMap.getTileUnsafe(x, y);
-    std::cout <<  std::to_string(getTextureAtlas(tile, 0, 32, 32).x) << std::endl;
-    std::cout <<  std::to_string(getTextureAtlas(tile, 0, 32, 32).y) << std::endl;
-    std::cout <<  std::to_string(getTextureAtlas(tile, 0, 32, 32).width) << std::endl;
-    std::cout <<  std::to_string(getTextureAtlas(tile, 0, 32, 32).height) << std::endl;
 
     DrawTexturePro(
         assetManager.tiles,
-        getTextureAtlas(tile, 0, 32, 32), //source
+        getTextureAtlas(tile, 4, 32, 32), //source
         {static_cast<float>(x), static_cast<float>(y), 1, 1}, //dest
         {0, 0},// origin (top-left corner)
         0.0f, // rotation
@@ -141,9 +137,20 @@ void renderWorld(const AssetManager& assetManager, GameData& data)
             // Render normal blocks
             if (block != Block::air)
             {
+                // Assign blocks random textures
+
+                // 1. Create a unique seed for this specific coordinate
+                // Using primes (73856093, 19349663) helps distribute the seed values
+                unsigned int coordinateSeed = static_cast<unsigned int>(x) * 73856093 ^ static_cast<unsigned int>(y) * 19349663;
+
+                // 2. Initialize your engine with that seed
+                std::ranlux24_base rng(coordinateSeed);
+
+                int variantY = getRandomInt(rng, 0, 3);
+
                 DrawTexturePro(
                     assetManager.textures,
-                    getTextureAtlas(block, 0, 32, 32), //source
+                    getTextureAtlas(block, variantY, 32, 32), //source
                     {static_cast<float>(x), static_cast<float>(y), 1, 1}, //dest
                     {0, 0},// origin (top-left corner)
                     0.0f, // rotation
