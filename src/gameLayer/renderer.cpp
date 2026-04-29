@@ -3,14 +3,11 @@
 #include "raymath.h"
 #include <blocks.h>
 #include <gameMain.h>
+#include <iostream>
+#include <ostream>
 
-void renderWoodLog(const AssetManager& assetManager, GameData& data, int x, int y)
+int getTreeColumn(Block* up, Block* down, Block* left, Block* right)
 {
-    Block* up = data.gameMap.getBlockSafe(x, y - 1);
-    Block* down = data.gameMap.getBlockSafe(x, y + 1);
-    Block* left = data.gameMap.getBlockSafe(x - 1, y);
-    Block* right = data.gameMap.getBlockSafe(x + 1, y);
-
     auto isLogOrLeaves = [](Block* b) {
         return b && (b->type == Block::woodLog || b->type == Block::leaves);
     };
@@ -21,55 +18,48 @@ void renderWoodLog(const AssetManager& assetManager, GameData& data, int x, int 
         return b && b->type != Block::woodLog && b->type != Block::leaves && b->type != Block::air;
     };
 
-    bool hasLogOrLeavesAbove = isLogOrLeaves(up);
-    bool hasLogOrLeavesBelow = isLogOrLeaves(down);
-    bool hasLeavesLeft = isLeaves(left);
-    bool hasLeavesRight = isLeaves(right);
-    bool hasGroundBelow = isGround(down);
-
-    int col = 0;
-
-    // Log directly under leaves
     if (up && up->type == Block::leaves)
     {
-        col = 5;
+        return 5;
     }
-    // Top log: no log or leaves above, log or leaves below
-    else if (!hasLogOrLeavesAbove && hasLogOrLeavesBelow)
+    if (!isLogOrLeaves(up) && isLogOrLeaves(down))
     {
-        col = 6;
+        return 6;
     }
-    // Bottom of tree: solid ground directly below
-    else if (hasGroundBelow)
+    if (isGround(down))
     {
-        col = 4;
+        return 4;
     }
-    // Single log: nothing above or below
-    else if (!hasLogOrLeavesAbove && !hasLogOrLeavesBelow)
+    if (!isLogOrLeaves(up) && !isLogOrLeaves(down))
     {
-        col = 7;
+        return 7;
     }
-    // Middle trunk with leaves on both sides
-    else if (hasLeavesLeft && hasLeavesRight)
+    if (isLeaves(left) && isLeaves(right))
     {
-        col = 1;
+        return 1;
     }
-    // Middle trunk with leaves on right only
-    else if (hasLeavesRight)
+    if (isLeaves(right))
     {
-        col = 2;
+        return 2;
     }
-    // Middle trunk with leaves on left only
-    else if (hasLeavesLeft)
+    if (isLeaves(left))
     {
-        col = 3;
-    }
-    // Plain middle trunk
-    else
-    {
-        col = 0;
+        return 3;
     }
 
+    return 0;
+}
+
+
+void renderWoodLog(const AssetManager& assetManager, GameData& data, const int x, const int y)
+{
+    // Get the blocks around the current block
+    Block* up = data.gameMap.getBlockSafe(x, y - 1);
+    Block* down = data.gameMap.getBlockSafe(x, y + 1);
+    Block* left = data.gameMap.getBlockSafe(x - 1, y);
+    Block* right = data.gameMap.getBlockSafe(x + 1, y);
+
+    int col = getTreeColumn(up, down, left, right);
     int row = (x * 7 + y * 3) % 4;
 
     DrawTexturePro(
@@ -82,9 +72,22 @@ void renderWoodLog(const AssetManager& assetManager, GameData& data, int x, int 
     );
 }
 
-void renderWalls(const AssetManager& assetManager, GameData& data, int x, int y)
+void renderTile(const AssetManager& assetManager, GameData& data, int x, int y)
 {
+    auto &[tile] = data.gameMap.getTileUnsafe(x, y);
+    std::cout <<  std::to_string(getTextureAtlas(tile, 0, 32, 32).x) << std::endl;
+    std::cout <<  std::to_string(getTextureAtlas(tile, 0, 32, 32).y) << std::endl;
+    std::cout <<  std::to_string(getTextureAtlas(tile, 0, 32, 32).width) << std::endl;
+    std::cout <<  std::to_string(getTextureAtlas(tile, 0, 32, 32).height) << std::endl;
 
+    DrawTexturePro(
+        assetManager.tiles,
+        getTextureAtlas(tile, 0, 32, 32), //source
+        {static_cast<float>(x), static_cast<float>(y), 1, 1}, //dest
+        {0, 0},// origin (top-left corner)
+        0.0f, // rotation
+        WHITE // tint
+    );
 }
 
 void drawSelectedBlock(const AssetManager& assetManager)
@@ -125,6 +128,8 @@ void renderWorld(const AssetManager& assetManager, GameData& data)
     {
         for (int x = startXView; x <= endXView; x++)
         {
+            renderTile(assetManager, data, x, y);
+
             auto &[block] = data.gameMap.getBlocUnsafe(x, y);
 
             if (block == Block::woodLog)
@@ -144,7 +149,6 @@ void renderWorld(const AssetManager& assetManager, GameData& data)
                     0.0f, // rotation
                     WHITE // tint
                 );
-
             }
         }
     }

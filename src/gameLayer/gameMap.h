@@ -1,6 +1,7 @@
 #pragma once
 #include <vector>
 #include <blocks.h>
+#include <tile.h>
 
 struct GameMap
 {
@@ -11,6 +12,9 @@ struct GameMap
 
     /// Contains all map data
     std::vector<Block> mapData;
+
+    /// Contains all tile data
+    std::vector<Tile> tileData;
 
     /**
      * @brief Creates a new map with the given width and height
@@ -34,4 +38,20 @@ struct GameMap
      * @return a pointer to the target block
      */
     Block *getBlockSafe(int x, int y);
+
+    /**
+     * @brief Gets the tile at the given x y cords does not check to see if the tile is in map bounds
+     * @param x Target x cord
+     * @param y Target y cord
+     * @return a reference to the target block
+     */
+    Tile &getTileUnsafe(int x, int y);
+
+    /**
+     * @brief Gets the tile at the given x y cords checks to see if the tile is in map bounds
+     * @param x Target x cord
+     * @param y Target y cord
+     * @return a pointer to the target block
+     */
+    Tile *getTileSafe(int x, int y);
 };

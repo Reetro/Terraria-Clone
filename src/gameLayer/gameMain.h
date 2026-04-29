@@ -1,5 +1,6 @@
 #pragma once
 #include <blocks.h>
+#include <tile.h>
 #include <gameMap.h>
 
 inline struct GameData
@@ -7,6 +8,8 @@ inline struct GameData
     GameMap gameMap;
     Camera2D camera{};
     Block blockToPlace;
+    Tile tileToPlace;
+    bool isHoldingWall = false;
 } gameData;
 
 // Initializes game login called when game starts

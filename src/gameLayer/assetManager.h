@@ -7,6 +7,7 @@ struct AssetManager
     Texture2D textures = {};
     Texture2D frame = {};
     Texture2D tree = {};
+    Texture2D tiles = {};
 
     void loadAll();
 };
