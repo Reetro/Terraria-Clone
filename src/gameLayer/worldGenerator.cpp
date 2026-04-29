@@ -1,60 +1,80 @@
 #include "worldGenerator.h"
-#include <randomStuff.h>
 #include <blocks.h>
-#include <cmath>
+#include <FastNoiseSIMD.h>
+#include <memory>
+#include <random>
 
 void generateWorld(GameMap &gameMap, long seed)
 {
     const int w = 900;
     const int h = 500;
     gameMap.create(w, h);
-    std::ranlux24_base coordRNG(seed);
 
-    // Ground starts at 1/4 of the way down the screen
-    float baseHeight = h * 0.25f;
+    std::ranlux24_base rng(seed++);
+
+    std::unique_ptr<FastNoiseSIMD> dirtNoiseGenerator(FastNoiseSIMD::NewFastNoiseSIMD());
+    std::unique_ptr<FastNoiseSIMD> stoneNoiseGenerator(FastNoiseSIMD::NewFastNoiseSIMD());
+
+    dirtNoiseGenerator->SetSeed(seed++);
+    stoneNoiseGenerator->SetSeed(seed++);
+
+    dirtNoiseGenerator->SetNoiseType(FastNoiseSIMD::NoiseType::SimplexFractal);
+    dirtNoiseGenerator->SetFractalOctaves(1);
+    dirtNoiseGenerator->SetFrequency(0.02);
+
+    stoneNoiseGenerator->SetNoiseType(FastNoiseSIMD::NoiseType::SimplexFractal);
+    stoneNoiseGenerator->SetFractalOctaves(4);
+    stoneNoiseGenerator->SetFrequency(0.01);
+
+    float *dirtNoise = FastNoiseSIMD::GetEmptySet(w);
+    float *stoneNoise = FastNoiseSIMD::GetEmptySet(w);
+
+    dirtNoiseGenerator->FillNoiseSet(dirtNoise, 0, 0, 0, w, 1, 1);
+    stoneNoiseGenerator->FillNoiseSet(stoneNoise, 0, 0, 0, w, 1, 1);
+
+    // Convert from [-1, 1] to [0, 1]
+    for (int i = 0; i < w; i++)
+    {
+        dirtNoise[i] = (dirtNoise[i] + 1) / 2;
+        stoneNoise[i] = (stoneNoise[i] + 1) / 2;
+
+        stoneNoise[i] = std::pow(stoneNoise[i], 2); // steeper mountains
+    }
+
+    int dirtOffsetStart = -5;
+    int dirtOffsetEnd = 35;
+
+    int stoneHeightStart = 80;
+    int stoneHeightEnd = 170;
 
     for (int x = 0; x < w; x++)
     {
-        // 1. FREQUENCY: If this is too small (e.g. 0.001), the hill is 2000px wide.
-        // 2. AMPLITUDE: This is the height in pixels/tiles.
-
-        // We use (x + (seed % 1000)) to ensure we aren't at the "flat" start of the sine wave
-        auto xPos = static_cast<float>(x + (seed % 200));
-
-        // Mountain: Wave every ~150 pixels
-        float mountain = std::sin(xPos * 0.04f) * 20.0f;
-
-        // Rolling Hills: Wave every ~40 pixels
-        float hills = std::sin(xPos * 0.15f) * 12.0f;
-
-        int surfaceY = static_cast<int>(baseHeight + mountain + hills);
-
-        // Clamp to map bounds
-        if (surfaceY < 0) surfaceY = 0;
-        if (surfaceY >= h) surfaceY = h - 1;
+        int stoneHeight = stoneHeightStart + (stoneHeightEnd - stoneHeightStart) * stoneNoise[x];
+        int dirtHeight = dirtOffsetStart + (dirtOffsetEnd - dirtOffsetStart) * dirtNoise[x];
 
         for (int y = 0; y < h; y++)
         {
             Block block;
-            if (y < surfaceY)
-            {
-                block.type = Block::air;
-            }
-            else if (y == surfaceY)
-            {
-                block.type = Block::grassBlock;
-            }
-            else if (y < surfaceY + 8)
+
+            if (y > dirtHeight)
             {
                 block.type = Block::dirt;
             }
-            else
+
+            if (y == dirtHeight)
+            {
+                block.type = Block::grassBlock;
+            }
+
+            if (y >= stoneHeight)
             {
                 block.type = Block::stone;
-                if (getRandomChance(coordRNG, 0.01f)) block.type = Block::gold;
             }
 
             gameMap.getBlocUnsafe(x, y) = block;
         }
     }
+
+    FastNoiseSIMD::FreeNoiseSet(dirtNoise);
+    FastNoiseSIMD::FreeNoiseSet(stoneNoise);
 }

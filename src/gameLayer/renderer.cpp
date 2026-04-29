@@ -137,7 +137,7 @@ void renderWorld(const AssetManager& assetManager, GameData& data)
             // Render normal blocks
             if (block != Block::air)
             {
-                // Assign blocks random textures
+                // Assign blocks random textures this is a really terrible way to do this but am lazy right now
 
                 // 1. Create a unique seed for this specific coordinate
                 // Using primes (73856093, 19349663) helps distribute the seed values
