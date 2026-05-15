@@ -142,10 +142,9 @@ bool updateGame()
 
     ImGui::SliderFloat("Camera Zoom:", &gameData.camera.zoom, 10.0f, 150);
     ImGui::SliderFloat("Camera Speed:", &CAMERA_SPEED, 5, 30);
+    ImGui::Text("FPS: %d", GetFPS());
 
     ImGui::End();
-
-    DrawFPS(10, 10);
 
     return true;
 }

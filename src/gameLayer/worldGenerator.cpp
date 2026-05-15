@@ -12,7 +12,7 @@ void generateWorld(GameMap &gameMap, long seed)
 
     std::ranlux24_base rng(seed++);
 
-    int desertStart = getRandomInt(rng, 10, w -210);
+    int desertStart = getRandomInt(rng, 10, w - 210);
     int desertEnd = desertStart + 100 + getRandomInt(rng, 0, 100);
     if (desertEnd > w)
     {
@@ -21,9 +21,15 @@ void generateWorld(GameMap &gameMap, long seed)
 
     std::unique_ptr<FastNoiseSIMD> dirtNoiseGenerator(FastNoiseSIMD::NewFastNoiseSIMD());
     std::unique_ptr<FastNoiseSIMD> stoneNoiseGenerator(FastNoiseSIMD::NewFastNoiseSIMD());
+    std::unique_ptr<FastNoiseSIMD> cavesNoiseGenerator(FastNoiseSIMD::NewFastNoiseSIMD());
+    std::unique_ptr<FastNoiseSIMD> caves2NoiseGenerator(FastNoiseSIMD::NewFastNoiseSIMD());
+    std::unique_ptr<FastNoiseSIMD> caves3NoiseGenerator(FastNoiseSIMD::NewFastNoiseSIMD());
 
     dirtNoiseGenerator->SetSeed(seed++);
     stoneNoiseGenerator->SetSeed(seed++);
+    cavesNoiseGenerator->SetSeed(seed++);
+    caves2NoiseGenerator->SetSeed(seed++);
+    caves3NoiseGenerator->SetSeed(seed++);
 
     dirtNoiseGenerator->SetNoiseType(FastNoiseSIMD::NoiseType::SimplexFractal);
     dirtNoiseGenerator->SetFractalOctaves(1);
@@ -33,11 +39,28 @@ void generateWorld(GameMap &gameMap, long seed)
     stoneNoiseGenerator->SetFractalOctaves(2);
     stoneNoiseGenerator->SetFrequency(0.02);
 
+    cavesNoiseGenerator->SetNoiseType(FastNoiseSIMD::NoiseType::SimplexFractal);
+    cavesNoiseGenerator->SetFractalOctaves(2);
+    cavesNoiseGenerator->SetFrequency(0.02);
+
+    caves2NoiseGenerator->SetNoiseType(FastNoiseSIMD::NoiseType::SimplexFractal);
+    caves2NoiseGenerator->SetFractalOctaves(3); // different character
+    caves2NoiseGenerator->SetFrequency(0.04f); // higher freq = smaller features
+
+    caves3NoiseGenerator->SetNoiseType(FastNoiseSIMD::NoiseType::Simplex); // non-fractal, smoother regions
+    caves3NoiseGenerator->SetFrequency(0.005f); // very low freq = large blobs of each style
+
     float *dirtNoise = FastNoiseSIMD::GetEmptySet(w);
     float *stoneNoise = FastNoiseSIMD::GetEmptySet(w);
+    float *cavesNoise = FastNoiseSIMD::GetEmptySet(w * h);
+    float *caves2Noise = FastNoiseSIMD::GetEmptySet(w * h);
+    float *caves3Noise = FastNoiseSIMD::GetEmptySet(w * h);
 
     dirtNoiseGenerator->FillNoiseSet(dirtNoise, 0, 0, 0, w, 1, 1);
     stoneNoiseGenerator->FillNoiseSet(stoneNoise, 0, 0, 0, w, 1, 1);
+    cavesNoiseGenerator->FillNoiseSet(cavesNoise, 0, 0, 0, h, w, 1); //make sure you flip w and h!
+    caves2NoiseGenerator->FillNoiseSet(caves2Noise, 0, 0, 0, h, w, 1);
+    caves3NoiseGenerator->FillNoiseSet(caves3Noise, 0, 0, 0, h, w, 1);
 
     // Convert from [-1, 1] to [0, 1]
     for (int i = 0; i < w; i++)
@@ -47,6 +70,34 @@ void generateWorld(GameMap &gameMap, long seed)
 
         stoneNoise[i] = std::pow(stoneNoise[i], 2); // steeper mountains
     }
+
+    //convert from [-1 1] to [0 1]
+    for (int i = 0; i < w * h; i++)
+    {
+        cavesNoise[i] = (cavesNoise[i] + 1) / 2;
+        caves2Noise[i] = (caves2Noise[i] + 1) / 2;
+        caves3Noise[i] = (caves3Noise[i] + 1) / 2;
+    }
+
+    auto getCaveNoise = [&](int x, int y)
+    {
+        return cavesNoise[x + y * w];
+    };
+
+    auto getCave2Noise = [&](int x, int y)
+    {
+        return caves2Noise[x + y * w];
+    };
+
+    auto getCave3Noise = [&](int x, int y)
+    {
+        return caves3Noise[x + y * w];
+    };
+
+    auto screenBlend = [](float base, float blend) -> float
+    {
+        return 1.0f - (1.0f - base) * (1.0f - blend);
+    };
 
     int dirtOffsetStart = -5;
     int dirtOffsetEnd = 35;
@@ -98,11 +149,6 @@ void generateWorld(GameMap &gameMap, long seed)
             if (y >= stoneHeight || (getRandomChance(rng, 0.02f) && y > dirtHeight))
             {
                 block.type = Block::stone;
-
-                if (getRandomChance(rng, 0.05f))
-                {
-                    block.type = dirtType;
-                }
             }
 
             if (inDesert)
@@ -126,10 +172,25 @@ void generateWorld(GameMap &gameMap, long seed)
                 }
             }
 
+            //bigger more interesting caves
+            //getCaveNoise(x, y) < 0.80 && getCaveNoise(x, y) > 0.60
+
+            float caveA = getCaveNoise(x, y);
+            float caveB = getCave2Noise(x, y);
+            float selector = getCave3Noise(x, y); // 0..1, large smooth regions
+
+            float caveFinal = caveA + selector * (caveB - caveA);
+
+            if (caveFinal < 0.35f)
+            {
+                block.type = Block::air;
+            }
+
             gameMap.getBlocUnsafe(x, y) = block;
         }
     }
 
     FastNoiseSIMD::FreeNoiseSet(dirtNoise);
     FastNoiseSIMD::FreeNoiseSet(stoneNoise);
+    FastNoiseSIMD::FreeNoiseSet(cavesNoise);
 }
