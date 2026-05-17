@@ -93,12 +93,12 @@ void drawSelectedBlock(const AssetManager& assetManager)
     const int blockY = static_cast<int>(std::floor(y));
 
     DrawTexturePro(
-        assetManager.frame,
-        {0,0, static_cast<float>(assetManager.frame.width), static_cast<float>(assetManager.frame.height)}, //source
-        {static_cast<float>(blockX), static_cast<float>(blockY), 1, 1}, //dest
+        assetManager.textures,
+        getTextureAtlas(gameData.creativeSelectedBlock, 4, 32, 32), //source
+{static_cast<float>(blockX), static_cast<float>(blockY), 1, 1},
         {0, 0},// origin (top-left corner)
         0.0f, // rotation
-        WHITE // tint
+        {255, 255, 255, 200} // tint
     );
 }
 

@@ -8,14 +8,15 @@
 #include <worldGenerator.h>
 #include <randomStuff.h>
 
+#include "helpers.h"
+
 AssetManager assetManager;
+
+bool showImgui = false;
 
 bool initGame()
 {
     assetManager.loadAll();
-
-    gameData.blockToPlace.type = Block::woodLog;
-    gameData.tileToPlace.type = Tile::dirtWall;
 
     long seed = std::chrono::high_resolution_clock::now().time_since_epoch().count();
 
@@ -39,6 +40,11 @@ bool updateGame()
     gameData.camera.offset = {GetScreenWidth() / 2.0f, GetScreenHeight() / 2.0f};
 
     ClearBackground({75, 75, 150, 255});
+
+    if (IsKeyPressed(KEY_F10))
+    {
+        showImgui = !showImgui;
+    }
 
 #pragma region camera movement
     static float CAMERA_SPEED = 10;
@@ -65,71 +71,59 @@ bool updateGame()
 #pragma endregion
 
 #pragma region block placement
-    if (IsKeyDown(KEY_ONE))
-    {
-        gameData.blockToPlace.type = -1;
-        gameData.tileToPlace.type = Tile::stoneWall;
-        gameData.isHoldingTile = true;
-    }
-
-    if (IsKeyDown(KEY_TWO))
-    {
-        gameData.blockToPlace.type = Block::dirt;
-        gameData.isHoldingTile = false;
-    }
-
-    if (IsKeyDown(KEY_THREE))
-    {
-        gameData.blockToPlace.type = Block::leaves;
-        gameData.isHoldingTile = false;
-    }
-
-    if (IsKeyDown(KEY_FOUR))
-    {
-        gameData.blockToPlace.type = Block::copper;
-        gameData.isHoldingTile = false;
-    }
-
     Vector2 worldPos = GetScreenToWorld2D(GetMousePosition(), gameData.camera);
     int blockX = static_cast<int>(std::floor(worldPos.x));
     int blockY = static_cast<int>(std::floor(worldPos.y));
 
-    // Destroy blocks & tiles
-    if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT))
+    if (gameData.creativeSelectedBlock < 0)
     {
-        Block* b = gameData.gameMap.getBlockSafe(blockX, blockY);
-        Tile* t = gameData.gameMap.getTileSafe(blockX, blockY);
+        gameData.creativeSelectedBlock = 0;
+    }
 
-        // 1. Check the foreground block first
-        if (b && b->type != Block::air)
+    if (gameData.creativeSelectedBlock >= Block::BLOCKS_COUNT)
+    {
+        gameData.creativeSelectedBlock = Block::BLOCKS_COUNT - 1;
+    }
+
+    if (!showImgui)
+    {
+        // Destroy blocks & tiles
+        if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT))
         {
-            *b = {}; // Destroy block
+            Block *b = gameData.gameMap.getBlockSafe(blockX, blockY);
+            Tile *t = gameData.gameMap.getTileSafe(blockX, blockY);
+
+            // 1. Check the foreground block first
+            if (b && b->type != Block::air)
+            {
+                *b = {}; // Destroy block
+            }
+            // 2. If no block is there, try to destroy the wall
+            else if (t && t->type != 0) // Assuming 0 is empty for your Tile enum
+            {
+                *t = {}; // Destroy wall
+            }
         }
-        // 2. If no block is there, try to destroy the wall
-        else if (t && t->type != 0) // Assuming 0 is empty for your Tile enum
+
+        // Place blocks
+        if (IsMouseButtonPressed(MOUSE_BUTTON_RIGHT))
         {
-            *t = {}; // Destroy wall
+            if (gameData.isHoldingTile)
+            {
+                if (Tile *t = gameData.gameMap.getTileSafe(blockX, blockY))
+                {
+                }
+            }
+            else
+            {
+                if (Block *b = gameData.gameMap.getBlockSafe(blockX, blockY); b != nullptr)
+                {
+                    b->type = gameData.creativeSelectedBlock;
+                }
+            }
         }
     }
 
-    // Place blocks
-    if (IsMouseButtonPressed(MOUSE_BUTTON_RIGHT))
-    {
-        if (gameData.isHoldingTile)
-        {
-            if (Tile* t = gameData.gameMap.getTileSafe(blockX, blockY))
-            {
-                t->type = gameData.tileToPlace.type;
-            }
-        }
-        else
-        {
-            if (Block *b = gameData.gameMap.getBlockSafe(blockX, blockY); b != nullptr)
-            {
-                b->type = gameData.blockToPlace.type;
-            }
-        }
-    }
 #pragma endregion
 
     BeginMode2D(gameData.camera);
@@ -138,18 +132,51 @@ bool updateGame()
 
     EndMode2D();
 
-    ImGui::Begin("Game Control");
+    if (showImgui)
+    {
+        ImGui::Begin("Game Control");
 
-    ImGui::SliderFloat("Camera Zoom:", &gameData.camera.zoom, 10.0f, 150);
-    ImGui::SliderFloat("Camera Speed:", &CAMERA_SPEED, 5, 30);
-    ImGui::Text("FPS: %d", GetFPS());
+        ImGui::SliderFloat("Camera Zoom:", &gameData.camera.zoom, 10.0f, 150);
+        ImGui::SliderFloat("Camera Speed:", &CAMERA_SPEED, 5, 30);
+        ImGui::Text("FPS: %d", GetFPS());
 
-    ImGui::End();
+        ImGui::Separator();
+
+        ImGui::Text("Blocks");
+
+        ImGui::Separator();
+
+        // Creative menu
+        for (int i = 0; i < Block::BLOCKS_COUNT; i++)
+        {
+            Rectangle atlas = getTextureAtlas(i, 0, 32, 32);
+
+            atlas.x /= assetManager.textures.width;
+            atlas.width /= assetManager.textures.width;
+            atlas.height /= assetManager.textures.height;
+            atlas.y /= assetManager.textures.height;
+
+            ImGui::PushID(i);
+
+            ImTextureID tex = (ImTextureID)(intptr_t)assetManager.textures.id;
+            if (ImGui::ImageButton(tex, {35, 35}, {atlas.x, atlas.y}, {atlas.x + atlas.width, atlas.y + atlas.height}))
+            {
+                gameData.creativeSelectedBlock = i;
+            }
+
+            ImGui::PopID();
+            if (i % 10 != 0)
+            {
+                ImGui::SameLine();
+            }
+        }
+
+        ImGui::End();
+    }
 
     return true;
 }
 
 void closeGame()
 {
-
 }

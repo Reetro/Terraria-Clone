@@ -7,9 +7,9 @@ inline struct GameData
 {
     GameMap gameMap;
     Camera2D camera{};
-    Block blockToPlace;
     Tile tileToPlace;
     bool isHoldingTile = false;
+    int creativeSelectedBlock = Block::dirt;
 } gameData;
 
 // Initializes game login called when game starts
