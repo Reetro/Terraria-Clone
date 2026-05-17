@@ -11,7 +11,7 @@ int main()
 #endif
 
 	SetConfigFlags(FLAG_WINDOW_RESIZABLE);
-	InitWindow(800, 600, "Terraria Clone");
+	InitWindow(1920, 1080, "Terraria Clone");
 	SetExitKey(KEY_NULL); // Disable esc key from closing window
 	SetTargetFPS(240);
 

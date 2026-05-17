@@ -3,6 +3,7 @@
 #include <FastNoiseSIMD.h>
 #include <memory>
 #include <randomStuff.h>
+#include <wormGenerator.h>
 
 void generateWorld(GameMap &gameMap, long seed)
 {
@@ -32,12 +33,12 @@ void generateWorld(GameMap &gameMap, long seed)
     caves3NoiseGenerator->SetSeed(seed++);
 
     dirtNoiseGenerator->SetNoiseType(FastNoiseSIMD::NoiseType::SimplexFractal);
-    dirtNoiseGenerator->SetFractalOctaves(1);
+    dirtNoiseGenerator->SetFractalOctaves(2);
     dirtNoiseGenerator->SetFrequency(0.01);
 
     stoneNoiseGenerator->SetNoiseType(FastNoiseSIMD::NoiseType::SimplexFractal);
-    stoneNoiseGenerator->SetFractalOctaves(2);
-    stoneNoiseGenerator->SetFrequency(0.02);
+    stoneNoiseGenerator->SetFractalOctaves(4);
+    stoneNoiseGenerator->SetFrequency(0.01);
 
     cavesNoiseGenerator->SetNoiseType(FastNoiseSIMD::NoiseType::SimplexFractal);
     cavesNoiseGenerator->SetFractalOctaves(2);
@@ -94,15 +95,10 @@ void generateWorld(GameMap &gameMap, long seed)
         return caves3Noise[x + y * w];
     };
 
-    auto screenBlend = [](float base, float blend) -> float
-    {
-        return 1.0f - (1.0f - base) * (1.0f - blend);
-    };
-
     int dirtOffsetStart = -5;
     int dirtOffsetEnd = 35;
 
-    int stoneHeightStart = 10;
+    int stoneHeightStart = 50;
     int stoneHeightEnd = 170;
 
     for (int x = 0; x < w; x++)
@@ -190,7 +186,20 @@ void generateWorld(GameMap &gameMap, long seed)
         }
     }
 
+    // Build surface height array after the terrain loop
+    std::vector<int> surfaceHeights(w);
+
+    for (int x = 0; x < w; x++)
+    {
+        int dirtHeight = dirtOffsetStart + (dirtOffsetEnd - dirtOffsetStart) * dirtNoise[x];
+        surfaceHeights[x] = dirtHeight;
+    }
+
+    spawnCaveWorm(20, 120, gameMap, rng, seed, surfaceHeights);
+
     FastNoiseSIMD::FreeNoiseSet(dirtNoise);
     FastNoiseSIMD::FreeNoiseSet(stoneNoise);
     FastNoiseSIMD::FreeNoiseSet(cavesNoise);
+    FastNoiseSIMD::FreeNoiseSet(caves2Noise);
+    FastNoiseSIMD::FreeNoiseSet(caves3Noise);
 }
