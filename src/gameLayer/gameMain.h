@@ -10,6 +10,7 @@ inline struct GameData
     Tile tileToPlace;
     bool isHoldingTile = false;
     int creativeSelectedBlock = Block::dirt;
+    int creativeSelectedTile = Tile::dirtWall;
 } gameData;
 
 // Initializes game login called when game starts

@@ -112,6 +112,7 @@ bool updateGame()
             {
                 if (Tile *t = gameData.gameMap.getTileSafe(blockX, blockY))
                 {
+                    t->type = gameData.creativeSelectedTile;
                 }
             }
             else
@@ -162,6 +163,39 @@ bool updateGame()
             if (ImGui::ImageButton(tex, {35, 35}, {atlas.x, atlas.y}, {atlas.x + atlas.width, atlas.y + atlas.height}))
             {
                 gameData.creativeSelectedBlock = i;
+                gameData.isHoldingTile = false;
+            }
+
+            ImGui::PopID();
+            if (i % 10 != 0)
+            {
+                ImGui::SameLine();
+            }
+        }
+
+        ImGui::Separator();
+        ImGui::Separator();
+
+        ImGui::Text("Tiles");
+
+        ImGui::Separator();
+
+        for (int i = 0; i < Tile::TILE_COUNT; i++)
+        {
+            Rectangle atlas = getTextureAtlas(i, 0, 32, 32);
+
+            atlas.x /= assetManager.tiles.width;
+            atlas.width /= assetManager.tiles.width;
+            atlas.height /= assetManager.tiles.height;
+            atlas.y /= assetManager.tiles.height;
+
+            ImGui::PushID(i);
+
+            ImTextureID tex = (ImTextureID)(intptr_t)assetManager.tiles.id;
+            if (ImGui::ImageButton(tex, {35, 35}, {atlas.x, atlas.y}, {atlas.x + atlas.width, atlas.y + atlas.height}))
+            {
+                gameData.creativeSelectedTile = i;
+                gameData.isHoldingTile = true;
             }
 
             ImGui::PopID();

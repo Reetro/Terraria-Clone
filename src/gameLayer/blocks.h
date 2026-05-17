@@ -65,4 +65,12 @@ struct Block
     };
 
     std::uint8_t type = 0;
+
+    void sanitize()
+    {
+        if (type >= BLOCKS_COUNT)
+        {
+            type = 0;
+        }
+    }
 };
