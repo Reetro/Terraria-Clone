@@ -9,6 +9,7 @@
 #include <randomStuff.h>
 
 #include "helpers.h"
+#include "saveMap.h"
 
 AssetManager assetManager;
 
@@ -127,9 +128,55 @@ bool updateGame()
 
 #pragma endregion
 
+#pragma region block section
+
+    if (showImgui)
+    {
+        if (IsKeyPressed(KEY_ONE))
+        {
+            gameData.selectionStart = Vector2{static_cast<float>(blockX), static_cast<float>(blockY)};
+        }
+
+        if (IsKeyPressed(KEY_TWO))
+        {
+            gameData.selectionEnd = Vector2{static_cast<float>(blockX), static_cast<float>(blockY)};
+        }
+
+        if (IsKeyPressed(KEY_THREE))
+        {
+            gameData.copyStructure.pasteIntoMap(gameData.gameMap, Vector2{static_cast<float>(blockX), static_cast<float>(blockY)});
+        }
+
+        if (gameData.selectionStart.x > gameData.selectionEnd.x)
+        {
+            std::swap(gameData.selectionStart.x, gameData.selectionEnd.x);
+        }
+
+        if (gameData.selectionStart.y > gameData.selectionEnd.y)
+        {
+            std::swap(gameData.selectionStart.y, gameData.selectionEnd.y);
+        }
+    }
+
+#pragma endregion
+
     BeginMode2D(gameData.camera);
 
     renderWorld(assetManager, gameData);
+
+    if (showImgui)
+    {
+        Rectangle rect;
+        rect.x = gameData.selectionStart.x;
+        rect.y = gameData.selectionStart.y;
+        rect.width = gameData.selectionEnd.x - gameData.selectionStart.x;
+        rect.height = gameData.selectionEnd.y - gameData.selectionStart.y;
+
+        rect.width++;
+        rect.height++;
+
+        DrawRectangleLinesEx(rect, 0.1, {20, 101, 250, 145});
+    }
 
     EndMode2D();
 
@@ -141,6 +188,31 @@ bool updateGame()
         ImGui::SliderFloat("Camera Speed:", &CAMERA_SPEED, 5, 30);
         ImGui::Text("FPS: %d", GetFPS());
 
+        if (ImGui::Button("Copy"))
+        {
+            gameData.copyStructure.copyFromMap(gameData.gameMap, gameData.selectionStart, gameData.selectionEnd);
+        }
+
+        ImGui::InputText("File Name", gameData.saveName, sizeof(gameData.saveName));
+
+        if (ImGui::Button("Save To File"))
+        {
+            std::string path = RESOURCES_PATH "structures/";
+            path += gameData.saveName;
+            path += ".bin";
+
+            saveBlockDataToFile(gameData.copyStructure.mapData, gameData.copyStructure.w, gameData.copyStructure.h, path.c_str());
+        }
+
+        if (ImGui::Button("Load From File"))
+        {
+            std::string path = RESOURCES_PATH "structures/";
+            path += gameData.saveName;
+            path += ".bin";
+
+            loadBlockDataFromFile(gameData.copyStructure.mapData, gameData.copyStructure.w, gameData.copyStructure.h, path.c_str());
+        }
+
         ImGui::Separator();
 
         ImGui::Text("Blocks");
@@ -150,6 +222,11 @@ bool updateGame()
         // Creative menu
         for (int i = 0; i < Block::BLOCKS_COUNT; i++)
         {
+            if (i == Block::air)
+            {
+                continue;;
+            }
+
             Rectangle atlas = getTextureAtlas(i, 0, 32, 32);
 
             atlas.x /= assetManager.textures.width;
@@ -182,6 +259,11 @@ bool updateGame()
 
         for (int i = 0; i < Tile::TILE_COUNT; i++)
         {
+            if (i == Tile::air)
+            {
+                continue;
+            }
+
             Rectangle atlas = getTextureAtlas(i, 0, 32, 32);
 
             atlas.x /= assetManager.tiles.width;

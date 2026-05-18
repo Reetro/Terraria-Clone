@@ -61,3 +61,64 @@ Tile *Structure::getTileSafe(int x, int y)
 
     return &tileData[x + y * w];
 }
+
+void Structure::copyFromMap(GameMap &map, Vector2 start, Vector2 end)
+{
+    if (end.x > map.w)
+    {
+        end.x = map.w - 1;
+    }
+
+    if (start.x > map.w)
+    {
+        start.x = map.w - 1;
+    }
+
+    if (start.y > map.h)
+    {
+        start.y = map.h - 1;
+    }
+
+    if (end.y > map.h)
+    {
+        end.y = map.h - 1;
+    }
+
+    Vector2 size = Vector2{end.x - start.x + 1, end.y - start.y + 1};
+
+    if (size.x > map.w)
+    {
+        return;
+    }
+
+    if (size.y > map.h)
+    {
+        return;
+    }
+
+    create(size.x, size.y);
+
+    for (int y = 0; y < size.y; y++)
+    {
+        for (int x = 0; x < size.x; x++)
+        {
+            getBlocUnsafe(x, y) = map.getBlocUnsafe(x + start.x, y + start.y);
+        }
+    }
+}
+
+void Structure::pasteIntoMap(GameMap &map, Vector2 start)
+{
+    for (int y = 0; y < h; y++)
+    {
+        for (int x = 0; x < w; x++)
+        {
+            auto b = map.getBlockSafe(x + start.x, y + start.y);
+
+            if (b)
+            {
+                *b = getBlocUnsafe(x, y);
+            }
+        }
+    }
+}

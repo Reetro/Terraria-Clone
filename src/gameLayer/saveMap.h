@@ -4,10 +4,10 @@
 #include <fstream>
 
 // Save all block data to a file
-bool saveBlockDataToFile(std::vector<Block> blocks, int w, int h, const char *fileName);
+bool saveBlockDataToFile(const std::vector<Block> &blocks, int w, int h, const char *fileName);
 
 // Load block data from a file
-bool loadBlockDataToFile(std::vector<Block> &blocks, int w, int h, const char *fileName);
+bool loadBlockDataFromFile(std::vector<Block> &blocks, int &w, int &h, const char *fileName);
 
 // Read into vector
 bool readEntireFile(const char *fileName, std::vector<unsigned char> &outData);

@@ -3,6 +3,8 @@
 #include <tile.h>
 #include <gameMap.h>
 
+#include "structure.h"
+
 inline struct GameData
 {
     GameMap gameMap;
@@ -11,9 +13,16 @@ inline struct GameData
     bool isHoldingTile = false;
     int creativeSelectedBlock = Block::dirt;
     int creativeSelectedTile = Tile::dirtWall;
+
+    Vector2 selectionStart = {};
+    Vector2 selectionEnd = {};
+
+    Structure copyStructure;
+
+    char saveName[100] = {};
 } gameData;
 
-// Initializes game login called when game starts
+// Initializes game logic called when game starts
 bool initGame();
 
 // Called every frame

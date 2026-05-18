@@ -2,6 +2,8 @@
 #include <vector>
 #include <blocks.h>
 #include <tile.h>
+#include <raylib.h>
+#include "gameMap.h"
 
 struct Structure
 {
@@ -54,4 +56,19 @@ struct Structure
      * @return a pointer to the target block
      */
     Tile *getTileSafe(int x, int y);
+
+    /**
+     * @brief Copies the blocks in the start and end pos
+     * @param map Current map
+     * @param start Structure start point
+     * @param end Structure end point
+     */
+    void copyFromMap(GameMap &map, Vector2 start, Vector2 end);
+
+    /**
+     * @brief pasts the blocks in the start and end pos
+     * @param map Current map
+     * @param start Structure starting point
+     */
+    void pasteIntoMap(GameMap &map, Vector2 start);
 };
