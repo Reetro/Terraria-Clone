@@ -1,6 +1,30 @@
 #include "saveMap.h"
 #include "asserts.h"
 
+struct BlockSaveRepresentation1
+{
+
+    std::uint16_t type = 0;
+
+    Block toBlock()
+    {
+        Block b;
+        b.type = type;
+        return b;
+    }
+
+};
+
+const int VERSION = 1;
+
+
+BlockSaveRepresentation1 toBlockRepresentation(Block b)
+{
+    BlockSaveRepresentation1 rez;
+    rez.type = b.type;
+    return rez;
+}
+
 bool saveBlockDataToFile(const std::vector<Block> &blocks, const int w, const int h, const char *fileName)
 {
     std::ofstream f(fileName, std::ios::binary);
@@ -23,10 +47,15 @@ bool saveBlockDataToFile(const std::vector<Block> &blocks, const int w, const in
         return false;
     }
 
+    f.write((const char *)&VERSION, sizeof(VERSION));
     f.write((const char*)&w, sizeof(w));
     f.write((const char*)&h, sizeof(h));
 
-    f.write((const char *)blocks.data(), blocks.size() * sizeof(Block));
+    for (int i = 0; i < blocks.size(); i++)
+    {
+        auto b = toBlockRepresentation(blocks[i]);
+        f.write((const char *)&b.type, sizeof(b.type));
+    }
 
     return true;
 }
@@ -46,14 +75,20 @@ bool writeEntireFile(const char *fileName, const void *data, size_t size)
 
 bool loadBlockDataFromFile(std::vector<Block> &blocks, int &w, int &h, const char *fileName)
 {
+
     blocks.clear();
     w = 0;
     h = 0;
 
     std::ifstream f(fileName, std::ios::binary);
 
-    f.read(reinterpret_cast<char *>(&w), sizeof(w));
-    f.read(reinterpret_cast<char *>(&h), sizeof(h));
+    if (!f.is_open()) { return false; }
+
+    int readVersion = 0;
+
+    f.read((char *)&readVersion, sizeof(readVersion));
+    f.read((char *)&w, sizeof(w));
+    f.read((char *)&h, sizeof(h));
 
     if (!f || w <= 0 || h <= 0)
     {
@@ -61,29 +96,46 @@ bool loadBlockDataFromFile(std::vector<Block> &blocks, int &w, int &h, const cha
         return false;
     }
 
-    // Probably corrupt data
-    if (w > 10000)
+    if (w > 10000) { f.close(); return false; } //probably corrupt data
+    if (h > 10000) { f.close(); return false; } //probably corrupt data
+
+    // Read block data
+
+    switch (readVersion)
     {
-        return false;
-    }
+        case 1:
+        {
 
-    if (h > 10000)
-    {
-        return false;
-    }
+            size_t blockCount = w * h;
+            blocks.resize(blockCount);
 
-    size_t blockCount = w * h;
-    blocks.resize(blockCount);
+            for (int i = 0; i < blockCount; i++)
+            {
+                BlockSaveRepresentation1 read;
+                f.read((char *)&read, sizeof(read));
 
-    f.read(reinterpret_cast<char *>(blocks.data()), sizeof(Block) * blockCount);
+                if (!f)
+                {
+                    blocks.clear();
+                    w = 0;
+                    h = 0;
+                    f.close();
+                    return false;
+                }
 
-    if (!f)
-    {
-        blocks.clear();
-        w = 0;
-        h = 0;
-        f.close();
-        return false;
+                blocks[i] = read.toBlock();
+            }
+            break;
+        }
+
+        default:
+        {
+            //incorect version
+            w = 0;
+            h = 0;
+            f.close();
+            return false;
+        }
     }
 
     for (int i = 0; i < blocks.size(); i++)
@@ -93,6 +145,7 @@ bool loadBlockDataFromFile(std::vector<Block> &blocks, int &w, int &h, const cha
 
     f.close();
     return true;
+
 }
 
 bool readEntireFile(const char *fileName, std::vector<unsigned char> &outData)

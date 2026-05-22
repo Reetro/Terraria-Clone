@@ -3,7 +3,45 @@
 #include <FastNoiseSIMD.h>
 #include <memory>
 #include <randomStuff.h>
+#include <structure.h>
 #include <wormGenerator.h>
+#include "saveMap.h"
+
+void spawnTrees(GameMap &gameMap, Structure treeStructure, int w, int h, std::ranlux24_base rng)
+{
+    for (int x = 0; x < w; x++)
+    {
+        if (getRandomChance(rng, 0.6f))
+        {
+            for (int y = 0; y < h; y++)
+            {
+                if (gameMap.getBlocUnsafe(x, y).type == Block::grassBlock)
+                {
+                    int trunkCol = x + 2; // trunk is at tx=2 in the structure
+                    int pasteY = y - treeStructure.h;
+
+                    // Only validate the trunk column - the one that actually matters
+                    auto below = gameMap.getBlockSafe(trunkCol, y);
+                    bool validPlacement = (trunkCol < w) && below && (below->type == Block::grassBlock);
+
+                    if (validPlacement)
+                    {
+                        Vector2 spawnPos
+                        {
+                            static_cast<float>(x),
+                            static_cast<float>(pasteY)
+                        };
+
+                        treeStructure.pasteIntoMap(gameMap, spawnPos);
+                        x += treeStructure.w;
+                    }
+
+                    break;
+                }
+            }
+        }
+    }
+}
 
 void generateWorld(GameMap &gameMap, long seed)
 {
@@ -19,6 +57,9 @@ void generateWorld(GameMap &gameMap, long seed)
     {
         desertEnd = w;
     }
+
+    Structure treeStructure;
+    loadBlockDataFromFile(treeStructure.mapData, treeStructure.w, treeStructure.h, RESOURCES_PATH "structures/tree.bin");
 
     std::unique_ptr<FastNoiseSIMD> dirtNoiseGenerator(FastNoiseSIMD::NewFastNoiseSIMD());
     std::unique_ptr<FastNoiseSIMD> stoneNoiseGenerator(FastNoiseSIMD::NewFastNoiseSIMD());
@@ -196,6 +237,7 @@ void generateWorld(GameMap &gameMap, long seed)
     }
 
     spawnCaveWorm(20, 120, gameMap, rng, seed, surfaceHeights);
+    spawnTrees(gameMap, treeStructure, w, h, rng);
 
     FastNoiseSIMD::FreeNoiseSet(dirtNoise);
     FastNoiseSIMD::FreeNoiseSet(stoneNoise);
