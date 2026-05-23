@@ -4,6 +4,7 @@
 #include "saveMap.h"
 #include "generators/biomeGenerator.h"
 #include "generators/caveGenerator.h"
+#include "generators/oreSpawner.h"
 #include "generators/structureSpawner.h"
 #include "generators/terrainGenerator.h"
 #include "generators/wormGenerator.h"
@@ -34,4 +35,13 @@ void generateWorld(GameMap& gameMap, long seed)
     Structure treeStructure;
     loadBlockDataFromFile(treeStructure.mapData, treeStructure.w, treeStructure.h, RESOURCES_PATH "structures/tree.bin");
     spawnTrees(gameMap, treeStructure, w, h, rng);
+
+    std::vector<OreSettings> ores =
+    {
+        { Block::copper,   0.04f,  40  },
+        { Block::iron,   0.02f,  80  },
+        { Block::gold,   0.008f, 140 },
+    };
+
+    spawnOres(gameMap, w, h, ores, rng);
 }
