@@ -27,6 +27,10 @@ bool initGame()
     gameData.camera.rotation = 0.0f;
     gameData.camera.zoom = 100.0f;
 
+    gameData.player.teleport({20, 120});
+    gameData.player.transform.w = 0.9f;
+    gameData.player.transform.h = 1.8f;
+
     return true;
 }
 
@@ -69,6 +73,18 @@ bool updateGame()
     {
         gameData.camera.target.y += CAMERA_SPEED * deltaTime;
     }
+#pragma endregion
+
+#pragma region enities
+
+    gameData.player.applyGravity();
+
+    gameData.player.updateForces(deltaTime);
+
+    gameData.camera.target = gameData.player.transform.pos; 
+
+    gameData.player.updateFinal();
+
 #pragma endregion
 
 #pragma region block placement

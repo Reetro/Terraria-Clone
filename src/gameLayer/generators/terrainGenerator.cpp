@@ -83,7 +83,6 @@ void generateTerrain(GameMap &gameMap, int w, int h, const TerrainNoiseArrays &n
         int dirtType = biome ? biome->blockDirt() : Block::dirt;
         int grassType = biome ? biome->blockGrass() : Block::grassBlock;
         int stoneType = biome ? biome->blockStone() : Block::stone;
-        std::cout << stoneType << std::endl;
 
         for (int y = 0; y < h; y++)
         {

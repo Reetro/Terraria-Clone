@@ -3,6 +3,7 @@
 #include <tile.h>
 #include <gameMap.h>
 
+#include "physics.h"
 #include "structure.h"
 
 inline struct GameData
@@ -20,6 +21,8 @@ inline struct GameData
     Structure copyStructure;
 
     char saveName[100] = {};
+
+    PhysicalEntity player = {};
 } gameData;
 
 // Initializes game logic called when game starts

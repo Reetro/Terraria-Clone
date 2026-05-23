@@ -86,6 +86,27 @@ void renderTile(const AssetManager& assetManager, GameData& data, int x, int y)
     );
 }
 
+void renderPlayer(const AssetManager& assetManager, GameData& data)
+{
+    Transform2D playerSprite = data.player.transform;
+    playerSprite.w = 1;
+    playerSprite.h = 2;
+    //move the sprite so that the bottom of the sprite matches the bottom of the collider
+    playerSprite.pos.y -= (playerSprite.h - gameData.player.transform.h) / 2;
+
+    DrawTexturePro(
+        assetManager.player,
+        {0, 0, static_cast<float>(assetManager.player.width), static_cast<float>(assetManager.player.height)},
+        playerSprite.getAABB(), //dest
+        {0, 0},// origin (top-left corner)
+        0.0f, // rotation
+        WHITE // tint
+    );
+
+    DrawRectangleLinesEx(gameData.player.transform.getAABB(), 0.1,
+        {20, 101, 250, 120});
+}
+
 void drawSelectedBlock(const AssetManager& assetManager)
 {
     auto [x, y] = GetScreenToWorld2D(GetMousePosition(), gameData.camera);
@@ -171,4 +192,5 @@ void renderWorld(const AssetManager& assetManager, GameData& data)
     }
 
     drawSelectedBlock(assetManager);
+    renderPlayer(assetManager, data);
 }

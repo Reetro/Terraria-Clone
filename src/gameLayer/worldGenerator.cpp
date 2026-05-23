@@ -27,7 +27,7 @@ void generateWorld(GameMap& gameMap, long seed)
     // Caves (carves into existing terrain)
     carveCaves(gameMap, w, h, seed);
 
-    // Surface heights for worm spawning
+    // Surface heights for worm spawningd
     std::vector<int> surfaceHeights = buildSurfaceHeights(w, terrainNoise);
     spawnCaveWorm(20, 120, gameMap, rng, seed, surfaceHeights);
 
