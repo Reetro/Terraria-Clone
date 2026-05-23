@@ -1,8 +1,7 @@
-#include "wormGenerator.h"
-#include <blocks.h>
 #include <cmath>
 #include <algorithm>
 #include <FastNoiseSIMD.h>
+#include "wormGenerator.h"
 
 void carveTunnel(GameMap& map, int centerX, int centerY, double radius, const std::vector<int>& surfaceHeights)
 {
