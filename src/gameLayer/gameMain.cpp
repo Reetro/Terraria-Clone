@@ -27,7 +27,7 @@ bool initGame()
     gameData.camera.rotation = 0.0f;
     gameData.camera.zoom = 100.0f;
 
-    gameData.player.teleport({20, 120});
+    gameData.player.teleport({40, 30});
     gameData.player.transform.w = 0.9f;
     gameData.player.transform.h = 1.8f;
 
@@ -56,32 +56,34 @@ bool updateGame()
 
     if (IsKeyDown(KEY_A))
     {
-        gameData.camera.target.x -= CAMERA_SPEED * deltaTime;
+        gameData.player.transform.pos.x -= CAMERA_SPEED * GetFrameTime();
     }
 
     if (IsKeyDown(KEY_D))
     {
-        gameData.camera.target.x += CAMERA_SPEED * deltaTime;
+        gameData.player.transform.pos.x += CAMERA_SPEED * GetFrameTime();
     }
 
     if (IsKeyDown(KEY_W))
     {
-        gameData.camera.target.y -= CAMERA_SPEED * deltaTime;
+        gameData.player.transform.pos.y -= CAMERA_SPEED * GetFrameTime();
     }
 
     if (IsKeyDown(KEY_S))
     {
-        gameData.camera.target.y += CAMERA_SPEED * deltaTime;
+        gameData.player.transform.pos.y += CAMERA_SPEED * GetFrameTime();
     }
 #pragma endregion
 
 #pragma region enities
 
-    gameData.player.applyGravity();
+    //gameData.player.applyGravity();
 
     gameData.player.updateForces(deltaTime);
 
-    gameData.camera.target = gameData.player.transform.pos; 
+    gameData.player.resolveConstrains(gameData.gameMap);
+
+    gameData.camera.target = gameData.player.transform.pos;
 
     gameData.player.updateFinal();
 
