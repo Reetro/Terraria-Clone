@@ -192,5 +192,6 @@ void renderWorld(const AssetManager& assetManager, GameData& data)
     }
 
     drawSelectedBlock(assetManager);
+    gameData.slime.render(assetManager);
     renderPlayer(assetManager, data);
 }

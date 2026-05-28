@@ -23,13 +23,14 @@ bool initGame()
 
     generateWorld(gameData.gameMap, seed);
 
-    gameData.camera.target = {20, 120}; // World space view
     gameData.camera.rotation = 0.0f;
     gameData.camera.zoom = 100.0f;
 
-    gameData.player.teleport({40, 30});
+    gameData.player.teleport({55, 15});
     gameData.player.transform.w = 0.9f;
     gameData.player.transform.h = 1.8f;
+
+    gameData.slime.physics.teleport({50, 15});
 
     return true;
 }
@@ -77,6 +78,7 @@ bool updateGame()
 
 #pragma region enities
 
+    // Player
     //gameData.player.applyGravity();
 
     gameData.player.updateForces(deltaTime);
@@ -86,6 +88,17 @@ bool updateGame()
     gameData.camera.target = gameData.player.transform.pos;
 
     gameData.player.updateFinal();
+
+    // Slime
+    gameData.slime.update(deltaTime);
+
+    gameData.slime.physics.applyGravity();
+
+    gameData.slime.physics.updateForces(deltaTime);
+
+    gameData.slime.physics.resolveConstrains(gameData.gameMap);
+
+    gameData.slime.physics.updateFinal();
 
 #pragma endregion
 
@@ -204,6 +217,8 @@ bool updateGame()
 
         ImGui::SliderFloat("Camera Zoom:", &gameData.camera.zoom, 10.0f, 150);
         ImGui::SliderFloat("Camera Speed:", &CAMERA_SPEED, 5, 30);
+        ImGui::Text("Player X: %f", gameData.player.transform.pos.x);
+        ImGui::Text("Player Y: %f", gameData.player.transform.pos.y);
         ImGui::Text("FPS: %d", GetFPS());
 
         if (ImGui::Button("Copy"))

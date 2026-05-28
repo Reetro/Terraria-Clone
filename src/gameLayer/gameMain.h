@@ -5,6 +5,7 @@
 
 #include "physics.h"
 #include "structure.h"
+#include "entities/slime.h"
 
 inline struct GameData
 {
@@ -23,6 +24,7 @@ inline struct GameData
     char saveName[100] = {};
 
     PhysicalEntity player = {};
+    Slime slime = {};
 } gameData;
 
 // Initializes game logic called when game starts

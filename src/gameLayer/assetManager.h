@@ -9,6 +9,7 @@ struct AssetManager
     Texture2D tree = {};
     Texture2D tiles = {};
     Texture2D player = {};
+    Texture slime = {};
 
     void loadAll();
 };

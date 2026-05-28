@@ -1,5 +1,6 @@
 #pragma once
 #include <raylib.h>
+#include "physics.h"
 
 /**
 * @brief Creates a rectangle that contains the location of the corresponding texture in an atlas
@@ -15,3 +16,5 @@ Rectangle getTextureAtlas(int x, int y, int cellSizePixelsX, int cellSizePixelsY
 * @param row The target row on the tree atlas
 */
 Rectangle getTreeAtlas(int col, int row);
+
+Rectangle getRectangleForEntity(Transform2D transform, float textureW, float textureH);
