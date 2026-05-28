@@ -235,6 +235,16 @@ struct PhysicalEntity
         acceleration += {0, 20};
     }
 
+    void jump(float force)
+    {
+        if (downTouch)
+        {
+            // We don't use acceleration because that is influenced by delta time
+            // we directly change the velocity with no delta time because we want the force to happen in one frame only
+            velocity.y = -force;
+        }
+    }
+
     void resolveConstrains(GameMap &mapData);
 
     void checkCollisionOnce(Vector2 &pos, GameMap &mapData);

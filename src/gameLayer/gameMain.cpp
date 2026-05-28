@@ -65,21 +65,26 @@ bool updateGame()
         gameData.player.transform.pos.x += CAMERA_SPEED * GetFrameTime();
     }
 
-    if (IsKeyDown(KEY_W))
-    {
-        gameData.player.transform.pos.y -= CAMERA_SPEED * GetFrameTime();
-    }
+    // if (IsKeyDown(KEY_W))
+    // {
+    //     gameData.player.transform.pos.y -= CAMERA_SPEED * GetFrameTime();
+    // }
 
-    if (IsKeyDown(KEY_S))
+    // if (IsKeyDown(KEY_S))
+    // {
+    //     gameData.player.transform.pos.y += CAMERA_SPEED * GetFrameTime();
+    // }
+
+    if (IsKeyDown(KEY_SPACE))
     {
-        gameData.player.transform.pos.y += CAMERA_SPEED * GetFrameTime();
+        gameData.player.jump(10);
     }
 #pragma endregion
 
 #pragma region enities
 
     // Player
-    //gameData.player.applyGravity();
+    gameData.player.applyGravity();
 
     gameData.player.updateForces(deltaTime);
 
@@ -90,7 +95,9 @@ bool updateGame()
     gameData.player.updateFinal();
 
     // Slime
-    gameData.slime.update(deltaTime);
+    std::ranlux24_base rng (std::random_device{}());
+
+    gameData.slime.update(deltaTime, rng , gameData.player.transform.pos);
 
     gameData.slime.physics.applyGravity();
 
