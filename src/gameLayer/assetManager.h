@@ -1,4 +1,5 @@
 #pragma once
+#include <string>
 #include "raylib.h"
 
 struct AssetManager
@@ -11,5 +12,6 @@ struct AssetManager
     Texture2D player = {};
     Texture slime = {};
 
-    void loadAll();
+    void loadAll(const std::string& customPath = "");
+    void unloadAll();
 };

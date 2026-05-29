@@ -17,7 +17,7 @@ bool showImgui = false;
 
 bool initGame()
 {
-    assetManager.loadAll();
+    assetManager.loadAll("../texturePacks");
 
     long seed = std::chrono::high_resolution_clock::now().time_since_epoch().count();
 
