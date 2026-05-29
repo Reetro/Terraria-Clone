@@ -1,12 +1,11 @@
 #pragma once
 #include <physics.h>
-#include <raylib.h>
-#include <random>
 #include <entityAnimation.h>
+#include <entity.h>
 
 struct AssetManager;
 
-struct Slime
+struct Slime : Entity
 {
     Slime()
     {
@@ -14,17 +13,15 @@ struct Slime
         physics.transform.h = 0.8f;
     }
 
-    PhysicalEntity physics;
     EntityAnimation animation;
 
-    Vector2 &getPosition()
+    void render(AssetManager &asset_manager) override;
+    void update(float deltaTime, EntityUpdateData entityUpdateData) override;
+
+    int getEntityType() override
     {
-        return physics.transform.pos;
+        return EntityType_Slime;
     }
-
-    void render(const AssetManager &asset_manager) const;
-
-    void update(float deltaTime, std::ranlux24_base rng, Vector2 playerPosition);
 
     enum
     {

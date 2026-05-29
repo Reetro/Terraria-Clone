@@ -3,6 +3,7 @@
 #include <tile.h>
 #include <gameMap.h>
 
+#include "entityIdHolder.h"
 #include "physics.h"
 #include "structure.h"
 #include "entities/slime.h"
@@ -24,7 +25,7 @@ inline struct GameData
     char saveName[100] = {};
 
     PhysicalEntity player = {};
-    Slime slime = {};
+    EntityHolder entities;
 } gameData;
 
 // Initializes game logic called when game starts

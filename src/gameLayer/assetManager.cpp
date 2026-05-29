@@ -44,10 +44,10 @@ std::unordered_map<std::string, std::string> scanTexturePacks(const std::string&
 void assignTexture(Texture2D& textureSlot, const std::string& filename, const std::unordered_map<std::string, std::string>& customFiles)
 {
     // Check if our first-match map contains this file
-    auto it = customFiles.find(filename);
-    if (it != customFiles.end())
+    auto file = customFiles.find(filename);
+    if (file != customFiles.end())
     {
-        textureSlot = LoadTexture(it->second.c_str());
+        textureSlot = LoadTexture(file->second.c_str());
     }
 
     // Fallback: If it wasn't in any pack, or failed to load, use default resources

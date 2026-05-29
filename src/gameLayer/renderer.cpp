@@ -51,13 +51,13 @@ int getTreeColumn(Block* up, Block* down, Block* left, Block* right)
 }
 
 
-void renderWoodLog(const AssetManager& assetManager, GameData& data, const int x, const int y)
+void renderWoodLog(AssetManager& assetManager, const int x, const int y)
 {
     // Get the blocks around the current block
-    Block* up = data.gameMap.getBlockSafe(x, y - 1);
-    Block* down = data.gameMap.getBlockSafe(x, y + 1);
-    Block* left = data.gameMap.getBlockSafe(x - 1, y);
-    Block* right = data.gameMap.getBlockSafe(x + 1, y);
+    Block* up = gameData.gameMap.getBlockSafe(x, y - 1);
+    Block* down = gameData.gameMap.getBlockSafe(x, y + 1);
+    Block* left = gameData.gameMap.getBlockSafe(x - 1, y);
+    Block* right = gameData.gameMap.getBlockSafe(x + 1, y);
 
     int col = getTreeColumn(up, down, left, right);
     int row = (x * 7 + y * 3) % 4;
@@ -72,9 +72,9 @@ void renderWoodLog(const AssetManager& assetManager, GameData& data, const int x
     );
 }
 
-void renderTile(const AssetManager& assetManager, GameData& data, int x, int y)
+void renderTile(AssetManager& assetManager, int x, int y)
 {
-    auto &[tile] = data.gameMap.getTileUnsafe(x, y);
+    auto &[tile] = gameData.gameMap.getTileUnsafe(x, y);
 
     DrawTexturePro(
         assetManager.tiles,
@@ -86,9 +86,9 @@ void renderTile(const AssetManager& assetManager, GameData& data, int x, int y)
     );
 }
 
-void renderPlayer(const AssetManager& assetManager, GameData& data)
+void renderPlayer(AssetManager& assetManager)
 {
-    Transform2D playerSprite = data.player.transform;
+    Transform2D playerSprite = gameData.player.transform;
     playerSprite.w = 1;
     playerSprite.h = 2;
     //move the sprite so that the bottom of the sprite matches the bottom of the collider
@@ -105,6 +105,14 @@ void renderPlayer(const AssetManager& assetManager, GameData& data)
 
     DrawRectangleLinesEx(gameData.player.transform.getAABB(), 0.1,
         {20, 101, 250, 120});
+}
+
+void renderEntities(AssetManager& assetManager)
+{
+    for (auto &e : gameData.entities.entities)
+    {
+        e.second->render(assetManager);
+    }
 }
 
 void drawSelectedBlock(const AssetManager& assetManager)
@@ -133,35 +141,35 @@ void drawSelectedBlock(const AssetManager& assetManager)
     );
 }
 
-void renderWorld(const AssetManager& assetManager, GameData& data)
+void renderWorld(AssetManager& assetManager)
 {
     // Calculate what blocks are in the current view
-    Vector2 topLeftView = GetScreenToWorld2D({0, 0}, data.camera);
-    Vector2 bottomRightView = GetScreenToWorld2D({static_cast<float>(GetScreenWidth()), static_cast<float>(GetScreenHeight())}, data.camera);
+    Vector2 topLeftView = GetScreenToWorld2D({0, 0}, gameData.camera);
+    Vector2 bottomRightView = GetScreenToWorld2D({static_cast<float>(GetScreenWidth()), static_cast<float>(GetScreenHeight())}, gameData.camera);
 
     int startXView = static_cast<int>(floorf(topLeftView.x - 1));
     int endXView = static_cast<int>(ceilf(bottomRightView.x + 1));
     int startYView = static_cast<int>(floorf(topLeftView.y - 1));
     int endYView = static_cast<int>(ceilf(bottomRightView.y + 1));
 
-    startXView = Clamp(startXView, 0, data.gameMap.w - 1);
-    endXView = Clamp(endXView, 0, data.gameMap.w - 1);
+    startXView = Clamp(startXView, 0, gameData.gameMap.w - 1);
+    endXView = Clamp(endXView, 0, gameData.gameMap.w - 1);
 
-    startYView = Clamp(startYView, 0, data.gameMap.h - 1);
-    endYView = Clamp(endYView, 0, data.gameMap.h - 1);
+    startYView = Clamp(startYView, 0, gameData.gameMap.h - 1);
+    endYView = Clamp(endYView, 0, gameData.gameMap.h - 1);
 
     // Draw all blocks that are currently in view of the camera
     for (int y = startYView; y <= endYView; y++)
     {
         for (int x = startXView; x <= endXView; x++)
         {
-            renderTile(assetManager, data, x, y);
+            renderTile(assetManager, x, y);
 
-            auto &[block] = data.gameMap.getBlocUnsafe(x, y);
+            auto &[block] = gameData.gameMap.getBlocUnsafe(x, y);
 
             if (block == Block::woodLog)
             {
-                renderWoodLog(assetManager, data, x, y);
+                renderWoodLog(assetManager, x, y);
                 continue; // skip the normal draw
             }
 
@@ -192,6 +200,6 @@ void renderWorld(const AssetManager& assetManager, GameData& data)
     }
 
     drawSelectedBlock(assetManager);
-    gameData.slime.render(assetManager);
-    renderPlayer(assetManager, data);
+    renderEntities(assetManager);
+    renderPlayer(assetManager);
 }

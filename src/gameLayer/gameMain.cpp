@@ -7,13 +7,24 @@
 #include <renderer.h>
 #include <worldGenerator.h>
 #include <randomStuff.h>
-
+#include <entity.h>
 #include "helpers.h"
 #include "saveMap.h"
 
 AssetManager assetManager;
 
 bool showImgui = false;
+
+void spawnSlime(Vector2 position)
+{
+    Slime slime;
+
+    slime.physics.teleport(position);
+
+    auto id = gameData.entities.idHolder.getEntityIDAndIncrement();
+
+    gameData.entities.entities[id] = std::make_unique<Slime>(slime);
+}
 
 bool initGame()
 {
@@ -29,8 +40,6 @@ bool initGame()
     gameData.player.teleport({55, 15});
     gameData.player.transform.w = 0.9f;
     gameData.player.transform.h = 1.8f;
-
-    gameData.slime.physics.teleport({50, 15});
 
     return true;
 }
@@ -94,18 +103,22 @@ bool updateGame()
 
     gameData.player.updateFinal();
 
-    // Slime
-    std::ranlux24_base rng (std::random_device{}());
+    // Update all entities
+    std::ranlux24_base rng(std::random_device{}());
+    EntityUpdateData updateData =
+    {
+        gameData.player.getPosition(),
+        rng
+    };
 
-    gameData.slime.update(deltaTime, rng , gameData.player.transform.pos);
-
-    gameData.slime.physics.applyGravity();
-
-    gameData.slime.physics.updateForces(deltaTime);
-
-    gameData.slime.physics.resolveConstrains(gameData.gameMap);
-
-    gameData.slime.physics.updateFinal();
+    for (auto &e : gameData.entities.entities)
+    {
+        e.second->update(deltaTime, updateData);
+        e.second->physics.applyGravity();
+        e.second->physics.updateForces(deltaTime);
+        e.second->physics.resolveConstrains(gameData.gameMap);
+        e.second->physics.updateFinal();
+    }
 
 #pragma endregion
 
@@ -200,7 +213,7 @@ bool updateGame()
 
     BeginMode2D(gameData.camera);
 
-    renderWorld(assetManager, gameData);
+    renderWorld(assetManager);
 
     if (showImgui)
     {
@@ -227,6 +240,11 @@ bool updateGame()
         ImGui::Text("Player X: %f", gameData.player.transform.pos.x);
         ImGui::Text("Player Y: %f", gameData.player.transform.pos.y);
         ImGui::Text("FPS: %d", GetFPS());
+
+        if (ImGui::Button("Spawn Slime"))
+        {
+            spawnSlime(gameData.player.getPosition());
+        }
 
         if (ImGui::Button("Copy"))
         {

@@ -3,26 +3,26 @@
 #include "helpers.h"
 #include "randomStuff.h"
 
-void Slime::render(const AssetManager &asset_manager) const
+void Slime::render(AssetManager &asset_manager)
 {
     auto aabb = getRectangleForEntity(physics.transform, 1, 1);
 
     DrawTexturePro(asset_manager.slime, getTextureAtlas(animation.positionX, animation.positionY, 32, 32), aabb, {0, 0}, 0.0f, WHITE);
 }
 
-void Slime::update(float deltaTime, std::ranlux24_base rng, Vector2 playerPosition)
+void Slime::update(float deltaTime, EntityUpdateData entityUpdateData)
 {
     changeStateTimer -= deltaTime;
 
     if (changeStateTimer <= 0)
     {
-        changeStateTimer = getRandomFloat(rng, 1, 7);
+        changeStateTimer = getRandomFloat(entityUpdateData.rng, 1, 7);
 
-        float distanceToPlayer = Vector2Distance(playerPosition, getPosition());
+        float distanceToPlayer = Vector2Distance(entityUpdateData.playerPosition, getPosition());
 
         if (distanceToPlayer < 20)
         {
-            if (getRandomChance(rng, 0.8f))
+            if (getRandomChance(entityUpdateData.rng, 0.8f))
             {
                 current_state = STATE_CHASING;
             }
@@ -57,10 +57,10 @@ void Slime::update(float deltaTime, std::ranlux24_base rng, Vector2 playerPositi
         {
             if (jumpTimer <= 0)
             {
-                jumpTimer = getRandomFloat(rng, 3, 12);
+                jumpTimer = getRandomFloat(entityUpdateData.rng, 3, 12);
 
                 physics.jump(10);
-                moveSpeed = getRandomFloat(rng, -7, 7);
+                moveSpeed = getRandomFloat(entityUpdateData.rng, -7, 7);
             }
         }
         break;
@@ -69,17 +69,17 @@ void Slime::update(float deltaTime, std::ranlux24_base rng, Vector2 playerPositi
         {
             if (jumpTimer <= 0)
             {
-                jumpTimer = getRandomFloat(rng, 2, 7);
+                jumpTimer = getRandomFloat(entityUpdateData.rng, 2, 7);
 
                 physics.jump(10);
 
-                if (playerPosition.x > getPosition().x)
+                if (entityUpdateData.playerPosition.x > getPosition().x)
                 {
-                    moveSpeed = getRandomFloat(rng, 1, 7);
+                    moveSpeed = getRandomFloat(entityUpdateData.rng, 1, 7);
                 }
                 else
                 {
-                    moveSpeed = -getRandomFloat(rng, 1, 7);
+                    moveSpeed = -getRandomFloat(entityUpdateData.rng, 1, 7);
                 }
             }
         }
