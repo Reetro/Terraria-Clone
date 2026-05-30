@@ -15,9 +15,6 @@ void DroppedItem::render(AssetManager &assetManager)
         0.0f, // rotation
         WHITE // tint
     );
-
-    DrawRectangleLinesEx(aabb, 0.1,
-        {20, 101, 250, 120});
 }
 
 bool DroppedItem::update(float deltaTime, EntityUpdateData entityUpdateData)

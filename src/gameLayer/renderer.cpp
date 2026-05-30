@@ -86,27 +86,6 @@ void renderTile(AssetManager& assetManager, int x, int y)
     );
 }
 
-void renderPlayer(AssetManager& assetManager)
-{
-    Transform2D playerSprite = gameData.player.transform;
-    playerSprite.w = 1;
-    playerSprite.h = 2;
-    //move the sprite so that the bottom of the sprite matches the bottom of the collider
-    playerSprite.pos.y -= (playerSprite.h - gameData.player.transform.h) / 2;
-
-    DrawTexturePro(
-        assetManager.player,
-        {0, 0, static_cast<float>(assetManager.player.width), static_cast<float>(assetManager.player.height)},
-        playerSprite.getAABB(), //dest
-        {0, 0},// origin (top-left corner)
-        0.0f, // rotation
-        WHITE // tint
-    );
-
-    DrawRectangleLinesEx(gameData.player.transform.getAABB(), 0.1,
-        {20, 101, 250, 120});
-}
-
 void renderEntities(AssetManager& assetManager)
 {
     for (auto &e : gameData.entityHolder.entities)
@@ -201,5 +180,5 @@ void renderWorld(AssetManager& assetManager)
 
     drawSelectedBlock(assetManager);
     renderEntities(assetManager);
-    renderPlayer(assetManager);
+    gameData.player.render(assetManager);
 }

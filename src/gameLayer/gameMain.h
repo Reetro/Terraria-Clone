@@ -5,6 +5,7 @@
 
 #include "entityIdHolder.h"
 #include "physics.h"
+#include "player.h"
 #include "structure.h"
 #include "entities/slime.h"
 
@@ -24,7 +25,7 @@ inline struct GameData
 
     char saveName[100] = {};
 
-    PhysicalEntity player = {};
+    Player player;
     EntityHolder entityHolder;
 } gameData;
 

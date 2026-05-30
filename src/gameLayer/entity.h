@@ -26,7 +26,7 @@ struct Entity
 
     PhysicalEntity physics;
 
-    Vector2 &getPosition()
+    virtual Vector2 &getPosition()
     {
         return physics.transform.pos;
     }

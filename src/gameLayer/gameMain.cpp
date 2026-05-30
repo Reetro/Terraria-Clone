@@ -52,8 +52,8 @@ bool initGame()
     gameData.camera.zoom = 100.0f;
 
     gameData.player.teleport({55, 15});
-    gameData.player.transform.w = 0.9f;
-    gameData.player.transform.h = 1.8f;
+    gameData.player.physics.transform.w = 0.9f;
+    gameData.player.physics.transform.h = 1.8f;
 
     return true;
 }
@@ -80,42 +80,47 @@ bool updateGame()
 
     if (IsKeyDown(KEY_A))
     {
-        gameData.player.transform.pos.x -= CAMERA_SPEED * GetFrameTime();
+        gameData.player.getPosition().x -= CAMERA_SPEED * GetFrameTime();
     }
 
     if (IsKeyDown(KEY_D))
     {
-        gameData.player.transform.pos.x += CAMERA_SPEED * GetFrameTime();
+        gameData.player.getPosition().x += CAMERA_SPEED * GetFrameTime();
     }
 
-    // if (IsKeyDown(KEY_W))
-    // {
-    //     gameData.player.transform.pos.y -= CAMERA_SPEED * GetFrameTime();
-    // }
+    if (IsKeyDown(KEY_W))
+    {
+        gameData.player.getPosition().y -= CAMERA_SPEED * GetFrameTime();
+    }
 
-    // if (IsKeyDown(KEY_S))
-    // {
-    //     gameData.player.transform.pos.y += CAMERA_SPEED * GetFrameTime();
-    // }
+    if (IsKeyDown(KEY_S))
+    {
+        gameData.player.getPosition().y += CAMERA_SPEED * GetFrameTime();
+    }
 
     if (IsKeyDown(KEY_SPACE))
     {
-        gameData.player.jump(10);
+        gameData.player.physics.jump(10);
     }
 #pragma endregion
 
 #pragma region enities
 
+    auto updateEntityPhysics = [&](auto &entity, bool applyGravity = true)
+    {
+        if (applyGravity) { entity.physics.applyGravity(); }
+
+        entity.physics.updateForces(deltaTime);
+
+        entity.physics.resolveConstrains(gameData.gameMap);
+
+        entity.physics.updateFinal();
+    };
+
     // Player
-    gameData.player.applyGravity();
+    updateEntityPhysics(gameData.player, false);
 
-    gameData.player.updateForces(deltaTime);
-
-    gameData.player.resolveConstrains(gameData.gameMap);
-
-    gameData.camera.target = gameData.player.transform.pos;
-
-    gameData.player.updateFinal();
+    gameData.camera.target = gameData.player.getPosition();
 
     // Update all entities
     std::ranlux24_base rng(std::random_device{}());
@@ -142,13 +147,11 @@ bool updateGame()
         {
             // erase returns the next valid iterator
             it = gameData.entityHolder.entities.erase(it);
-        } else
+        }
+        else
         {
             //physics
-            it->second->physics.applyGravity();
-            it->second->physics.updateForces(deltaTime);
-            it->second->physics.resolveConstrains(gameData.gameMap);
-            it->second->physics.updateFinal();
+            updateEntityPhysics(*it->second, true);
 
             ++it;
         }
@@ -277,8 +280,8 @@ bool updateGame()
 
         ImGui::SliderFloat("Camera Zoom:", &gameData.camera.zoom, 10.0f, 150);
         ImGui::SliderFloat("Camera Speed:", &CAMERA_SPEED, 5, 30);
-        ImGui::Text("Player X: %f", gameData.player.transform.pos.x);
-        ImGui::Text("Player Y: %f", gameData.player.transform.pos.y);
+        ImGui::Text("Player X: %f", gameData.player.physics.getPosition().x);
+        ImGui::Text("Player Y: %f", gameData.player.physics.getPosition().y);
         ImGui::Text("FPS: %d", GetFPS());
 
         if (ImGui::Button("Spawn Slime"))
