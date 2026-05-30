@@ -1,7 +1,7 @@
 #include "entityIdHolder.h"
 #include <asserts.h>
 
-std::uint64_t EntityIdHolder::getEntityIDAndIncrement()
+std::uint64_t EntityIdHolder::getEntityIdAndIncrement()
 {
     std::uint64_t id = idCounter;
     idCounter++;

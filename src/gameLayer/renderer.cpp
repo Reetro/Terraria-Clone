@@ -109,7 +109,7 @@ void renderPlayer(AssetManager& assetManager)
 
 void renderEntities(AssetManager& assetManager)
 {
-    for (auto &e : gameData.entities.entities)
+    for (auto &e : gameData.entityHolder.entities)
     {
         e.second->render(assetManager);
     }

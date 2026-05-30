@@ -25,7 +25,7 @@ inline struct GameData
     char saveName[100] = {};
 
     PhysicalEntity player = {};
-    EntityHolder entities;
+    EntityHolder entityHolder;
 } gameData;
 
 // Initializes game logic called when game starts

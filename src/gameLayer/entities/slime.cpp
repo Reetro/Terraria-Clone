@@ -7,10 +7,15 @@ void Slime::render(AssetManager &asset_manager)
 {
     auto aabb = getRectangleForEntity(physics.transform, 1, 1);
 
-    DrawTexturePro(asset_manager.slime, getTextureAtlas(animation.positionX, animation.positionY, 32, 32), aabb, {0, 0}, 0.0f, WHITE);
+    DrawTexturePro(asset_manager.slime,
+        getTextureAtlas(animation.positionX, animation.positionY, 32, 32),
+        aabb,
+        {0, 0},
+        0.0f,
+        WHITE);
 }
 
-void Slime::update(float deltaTime, EntityUpdateData entityUpdateData)
+bool Slime::update(float deltaTime, EntityUpdateData entityUpdateData)
 {
     changeStateTimer -= deltaTime;
 
@@ -92,4 +97,6 @@ void Slime::update(float deltaTime, EntityUpdateData entityUpdateData)
     }
 
     animation.update(deltaTime, 0.08, 7);
+
+    return true;
 }

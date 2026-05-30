@@ -16,7 +16,7 @@ struct Slime : Entity
     EntityAnimation animation;
 
     void render(AssetManager &asset_manager) override;
-    void update(float deltaTime, EntityUpdateData entityUpdateData) override;
+    bool update(float deltaTime, EntityUpdateData entityUpdateData) override;
 
     int getEntityType() override
     {

@@ -10,7 +10,7 @@ struct EntityIdHolder
 {
     std::uint64_t idCounter = 2;
 
-    std::uint64_t getEntityIDAndIncrement();
+    std::uint64_t getEntityIdAndIncrement();
 };
 
 struct EntityHolder

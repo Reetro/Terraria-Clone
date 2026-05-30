@@ -10,6 +10,7 @@
 #include <entity.h>
 #include "helpers.h"
 #include "saveMap.h"
+#include "entities/droppedItem.h"
 
 AssetManager assetManager;
 
@@ -21,9 +22,22 @@ void spawnSlime(Vector2 position)
 
     slime.physics.teleport(position);
 
-    auto id = gameData.entities.idHolder.getEntityIDAndIncrement();
+    auto id = gameData.entityHolder.idHolder.getEntityIdAndIncrement();
 
-    gameData.entities.entities[id] = std::make_unique<Slime>(slime);
+    gameData.entityHolder.entities[id] = std::make_unique<Slime>(slime);
+}
+
+void spawnDroppedItem(Vector2 position, int type)
+{
+    DroppedItem droppedItem;
+
+    droppedItem.teleport(position);
+    droppedItem.itemType = type;
+
+    auto id = gameData.entityHolder.idHolder.getEntityIdAndIncrement();
+
+    droppedItem.physics.velocity = {0, -3.0f};
+    gameData.entityHolder.entities[id] = (std::make_unique<DroppedItem>(droppedItem));
 }
 
 bool initGame()
@@ -105,19 +119,39 @@ bool updateGame()
 
     // Update all entities
     std::ranlux24_base rng(std::random_device{}());
-    EntityUpdateData updateData =
-    {
-        gameData.player.getPosition(),
-        rng
-    };
 
-    for (auto &e : gameData.entities.entities)
+    //update all entities
+    for (auto it = gameData.entityHolder.entities.begin(); it != gameData.entityHolder.entities.end();)
     {
-        e.second->update(deltaTime, updateData);
-        e.second->physics.applyGravity();
-        e.second->physics.updateForces(deltaTime);
-        e.second->physics.resolveConstrains(gameData.gameMap);
-        e.second->physics.updateFinal();
+        EntityUpdateData updateData
+        {
+            gameData.player.getPosition(),
+            rng,
+            gameData.entityHolder,
+            it->first
+        };
+
+        bool shouldKill = false;
+
+        if (!it->second->update(deltaTime, updateData))
+        {
+            shouldKill = true;
+        }
+
+        if (shouldKill)
+        {
+            // erase returns the next valid iterator
+            it = gameData.entityHolder.entities.erase(it);
+        } else
+        {
+            //physics
+            it->second->physics.applyGravity();
+            it->second->physics.updateForces(deltaTime);
+            it->second->physics.resolveConstrains(gameData.gameMap);
+            it->second->physics.updateFinal();
+
+            ++it;
+        }
     }
 
 #pragma endregion
@@ -148,6 +182,11 @@ bool updateGame()
             // 1. Check the foreground block first
             if (b && b->type != Block::air)
             {
+                spawnDroppedItem(
+                    {static_cast<float>(blockX) + 0.5f, static_cast<float>(blockY) - 0.3f}, // slightly above center
+                    b->type
+                );
+
                 *b = {}; // Destroy block
             }
             // 2. If no block is there, try to destroy the wall
@@ -166,8 +205,7 @@ bool updateGame()
                 {
                     t->type = gameData.creativeSelectedTile;
                 }
-            }
-            else
+            } else
             {
                 if (Block *b = gameData.gameMap.getBlockSafe(blockX, blockY); b != nullptr)
                 {
@@ -195,7 +233,9 @@ bool updateGame()
 
         if (IsKeyPressed(KEY_THREE))
         {
-            gameData.copyStructure.pasteIntoMap(gameData.gameMap, Vector2{static_cast<float>(blockX), static_cast<float>(blockY)});
+            gameData.copyStructure.pasteIntoMap(gameData.gameMap, Vector2{
+                                                    static_cast<float>(blockX), static_cast<float>(blockY)
+                                                });
         }
 
         if (gameData.selectionStart.x > gameData.selectionEnd.x)
@@ -259,7 +299,8 @@ bool updateGame()
             path += gameData.saveName;
             path += ".bin";
 
-            saveBlockDataToFile(gameData.copyStructure.mapData, gameData.copyStructure.w, gameData.copyStructure.h, path.c_str());
+            saveBlockDataToFile(gameData.copyStructure.mapData, gameData.copyStructure.w, gameData.copyStructure.h,
+                                path.c_str());
         }
 
         if (ImGui::Button("Load From File"))
@@ -268,7 +309,8 @@ bool updateGame()
             path += gameData.saveName;
             path += ".bin";
 
-            loadBlockDataFromFile(gameData.copyStructure.mapData, gameData.copyStructure.w, gameData.copyStructure.h, path.c_str());
+            loadBlockDataFromFile(gameData.copyStructure.mapData, gameData.copyStructure.w, gameData.copyStructure.h,
+                                  path.c_str());
         }
 
         ImGui::Separator();
@@ -294,7 +336,7 @@ bool updateGame()
 
             ImGui::PushID(i);
 
-            ImTextureID tex = (ImTextureID)(intptr_t)assetManager.textures.id;
+            ImTextureID tex = (ImTextureID) (intptr_t) assetManager.textures.id;
             if (ImGui::ImageButton(tex, {35, 35}, {atlas.x, atlas.y}, {atlas.x + atlas.width, atlas.y + atlas.height}))
             {
                 gameData.creativeSelectedBlock = i;
@@ -331,7 +373,7 @@ bool updateGame()
 
             ImGui::PushID(i);
 
-            ImTextureID tex = (ImTextureID)(intptr_t)assetManager.tiles.id;
+            ImTextureID tex = (ImTextureID) (intptr_t) assetManager.tiles.id;
             if (ImGui::ImageButton(tex, {35, 35}, {atlas.x, atlas.y}, {atlas.x + atlas.width, atlas.y + atlas.height}))
             {
                 gameData.creativeSelectedTile = i;
