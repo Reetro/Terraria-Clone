@@ -25,6 +25,7 @@ struct Entity
     virtual ~Entity() = default;
 
     PhysicalEntity physics;
+    float life = 1;
 
     virtual Vector2 &getPosition()
     {
@@ -39,4 +40,7 @@ struct Entity
     virtual void render(AssetManager &asset_manager) = 0;
     virtual bool update(float deltaTime, EntityUpdateData entityUpdateData) = 0;
     virtual int getEntityType() = 0;
+    virtual float getMaxLife() = 0;
+    virtual void onDeath() = 0;
+    virtual void onHit(float damage) = 0;
 };

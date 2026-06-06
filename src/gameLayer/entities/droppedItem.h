@@ -15,9 +15,22 @@ struct DroppedItem : Entity
     void render(AssetManager &assetManager) override;
     bool update(float deltaTime, EntityUpdateData entityUpdateData) override;
 
+    void onDeath() override
+    {
+    }
+
+    void onHit(float damage) override
+    {
+    }
+
     int getEntityType() override
     {
         return EntityType_DroppedItem;
+    }
+
+    float getMaxLife() override
+    {
+        return 1.0f;
     }
 
     int itemType = 0;

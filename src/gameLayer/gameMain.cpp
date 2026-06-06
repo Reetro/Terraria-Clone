@@ -138,13 +138,14 @@ bool updateGame()
 
         bool shouldKill = false;
 
-        if (!it->second->update(deltaTime, updateData))
+        if (!it->second->update(deltaTime, updateData) || it->second->life <= 0)
         {
             shouldKill = true;
         }
 
         if (shouldKill)
         {
+            it->second->onDeath();
             // erase returns the next valid iterator
             it = gameData.entityHolder.entities.erase(it);
         }
@@ -179,23 +180,44 @@ bool updateGame()
         // Destroy blocks & tiles
         if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT))
         {
-            Block *b = gameData.gameMap.getBlockSafe(blockX, blockY);
-            Tile *t = gameData.gameMap.getTileSafe(blockX, blockY);
+            bool hitAnEntity = false;
 
-            // 1. Check the foreground block first
-            if (b && b->type != Block::air)
+            for (auto &[id, entity] : gameData.entityHolder.entities)
             {
-                spawnDroppedItem(
-                    {static_cast<float>(blockX) + 0.5f, static_cast<float>(blockY) - 0.3f}, // slightly above center
-                    b->type
-                );
+                Rectangle entityRect;
+                entityRect.x = entity->getPosition().x;
+                entityRect.y = entity->getPosition().y;
+                entityRect.width  = entity->physics.transform.w;
+                entityRect.height = entity->physics.transform.h;
 
-                *b = {}; // Destroy block
+                if (CheckCollisionPointRec(worldPos, entityRect) && entity->getEntityType() == EntityType_Slime)
+                {
+                    entity->onHit(1.0f);
+                    hitAnEntity = true;
+                    break;
+                }
             }
-            // 2. If no block is there, try to destroy the wall
-            else if (t && t->type != 0) // Assuming 0 is empty for your Tile enum
+
+            if (!hitAnEntity)
             {
-                *t = {}; // Destroy wall
+                Block *b = gameData.gameMap.getBlockSafe(blockX, blockY);
+                Tile *t = gameData.gameMap.getTileSafe(blockX, blockY);
+
+                // 1. Check the foreground block first
+                if (b && b->type != Block::air)
+                {
+                    spawnDroppedItem(
+                        {static_cast<float>(blockX) + 0.5f, static_cast<float>(blockY) - 0.3f}, // slightly above center
+                        b->type
+                    );
+
+                    *b = {}; // Destroy block
+                }
+                // 2. If no block is there, try to destroy the wall
+                else if (t && t->type != 0) // Assuming 0 is empty for your Tile enum
+                {
+                    *t = {}; // Destroy wall
+                }
             }
         }
 
@@ -287,6 +309,18 @@ bool updateGame()
         if (ImGui::Button("Spawn Slime"))
         {
             spawnSlime(gameData.player.getPosition());
+        }
+
+        if (ImGui::Button("Hurt a slime"))
+        {
+            for (auto &e: gameData.entityHolder.entities)
+            {
+                if (e.second->getEntityType() == EntityType_Slime)
+                {
+                    e.second->life -= 3;
+                    break;
+                }
+            }
         }
 
         if (ImGui::Button("Copy"))
